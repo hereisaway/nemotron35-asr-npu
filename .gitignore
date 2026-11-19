@@ -1,0 +1,20 @@
+# logs and run artifacts
+logs/*
+!logs/.gitkeep
+*.log
+*.out
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# model weights / large artifacts
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+models/
+cache/
