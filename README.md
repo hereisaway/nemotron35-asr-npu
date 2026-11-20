@@ -17,9 +17,11 @@ XPU already has a recipe. Do not duplicate those paths.
 
 - Dedicated issue: https://github.com/sgl-project/sglang-omni/issues/4310
   - Title: `[NPU] Nemotron 3.5 ASR on Ascend roadmap`
-  - Status: opened 2026-11-19, awaiting maintainer assignment
+  - Status: open; **assigned to @ping1jing2 on 2026-11-19 17:35** (tracking owner, same pattern as #2076). Author @hereisaway is the implementer; co-assignee clarification is optional/pending.
 - Claim comment on NPU roadmap: https://github.com/sgl-project/sglang-omni/issues/1597#issuecomment-7013697894
   - Requested: add to #1597 Models checklist, assign
+  - Response: @ping1jing2 replied **"already done"** on 2026-11-19 17:40
+  - #1597 checklist now contains: `- [ ] **Nemotron 3.5 ASR** (@hereisaway #4310 )`
   - Pinged: @ping1jing2 (assignee/owner), @wangyao-i (Qwen3-ASR NPU conventions)
 - Related:
   - Roadmap focus: https://github.com/sgl-project/sglang-omni/issues/1081
@@ -81,7 +83,8 @@ XPU already has a recipe. Do not duplicate those paths.
 
 ## Next actions
 
-1. Wait for @ping1jing2 assignment / maintainer guidance.
-2. Pin and record the exact CANN / torch_npu / sglang-omni versions.
-3. Get the GPU/XPU reference passing, then attempt the NPU eager path.
-4. Record all commands and logs under this directory.
+1. [done] Claim accepted; #1597 checklist updated with `Nemotron 3.5 ASR (@hereisaway #4310)`.
+2. (Optional) Ask @ping1jing2 to add @hereisaway as a co-assignee and confirm whether 910B3 (A2) results are enough or A3 validation is needed.
+3. Pin and record the exact CANN / torch_npu / sglang-omni versions.
+4. Get the GPU/XPU reference passing, then attempt the NPU eager path.
+5. Record all commands and logs under `logs/` and `scripts/`.
