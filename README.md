@@ -1,6 +1,6 @@
 # Nemotron 3.5 ASR on Ascend NPU — workspace
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 ## Task
 
@@ -12,6 +12,14 @@ Bring `nvidia/nemotron-3.5-asr-streaming-0.6b` to Ascend NPU in SGLang-Omni, cov
 
 This is an **NPU-only** workstream. GPU (CUDA) support already exists in main;
 XPU already has a recipe. Do not duplicate those paths.
+
+## Step 0 status (2026-11-20)
+
+Eager NPU bring-up is done on 1x Ascend 910B4 (A2, 32 GB HBM) under an 8 GiB host memory cgroup. Offline transcription works through the server, and the model runner's eager streaming path works for float32 and bfloat16. Server `/v1/realtime` is blocked by the host memory limit during first-window TBE compilation, not by model logic. Details and commands: [docs/step0-report.md](docs/step0-report.md). Reproduction scripts: `scripts/step0/`.
+
+Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
+
+Step 0 found two code changes for PR 1: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one.
 
 ## Issue and tracking
 
@@ -58,11 +66,12 @@ XPU already has a recipe. Do not duplicate those paths.
 ## Plan
 
 ### M0 — eager correctness on 910B3
-- [ ] Pin environment: CANN 9.x, torch_npu version, sglang-omni commit
-- [ ] Reproduce the GPU/XPU reference path (offline + `/v1/realtime`)
-- [ ] Run eager on NPU with `--asr.factory.enable_encoder_cuda_graph false`
-- [ ] Fix op/device/dtype issues (RNN-T decoder, conv encoder, streaming state)
-- [ ] Compare BF16 transcripts against GPU on a small multilingual set
+- [x] Pin environment: CANN 9.x, torch_npu version, sglang-omni commit
+- [ ] Reproduce the GPU/XPU reference path (offline + `/v1/realtime`) — no GPU in the pod; compare against the recorded XPU/CUDA transcripts
+- [x] Run eager on NPU with `--asr.factory.enable_encoder_cuda_graph false`
+- [x] Fix op/device/dtype issues (RNN-T decoder, conv encoder, streaming state) — no operator changes needed; PR 1 adds NPU stream synchronization and realtime limits
+- [ ] Compare BF16 transcripts against GPU on a small multilingual set — single-clip parity recorded, multilingual set pending
+- [ ] Finish server `/v1/realtime` validation on a host with more than the 8 GiB cgroup used in Step 0
 
 ### M1 — performance
 - [ ] Decide: extend graph capture to NPU (new backend) or document eager fallback
@@ -84,7 +93,9 @@ XPU already has a recipe. Do not duplicate those paths.
 ## Next actions
 
 1. [done] Claim accepted; #1597 checklist updated with `Nemotron 3.5 ASR (@hereisaway #4310)`.
-2. (Optional) Ask @ping1jing2 to add @hereisaway as a co-assignee and confirm whether 910B3 (A2) results are enough or A3 validation is needed.
-3. Pin and record the exact CANN / torch_npu / sglang-omni versions.
-4. Get the GPU/XPU reference passing, then attempt the NPU eager path.
-5. Record all commands and logs under `logs/` and `scripts/`.
+2. [done] Pin and record the exact CANN / torch_npu / sglang-omni versions.
+3. [done] Run the NPU eager path and the in-process streaming path for float32 and bfloat16.
+4. (Optional) Ask @ping1jing2 to add @hereisaway as a co-assignee and confirm whether 910B4 (A2) results are enough or A3 validation is needed.
+5. Finish server `/v1/realtime` on a larger-memory host, then run multilingual parity.
+6. Land PR 1: `has_device_streams` synchronization, realtime session limits, NPU example config, cookbook and installation notes.
+7. Record all commands and logs under `logs/` and `scripts/step0/`.

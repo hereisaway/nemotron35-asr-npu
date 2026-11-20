@@ -18,3 +18,9 @@ logs/*
 *.onnx
 models/
 cache/
+
+# python / tooling artifacts
+__pycache__/
+.ipynb_checkpoints/
+kernel_meta/
+atc_data/
