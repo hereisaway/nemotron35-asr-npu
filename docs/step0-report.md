@@ -1,7 +1,7 @@
 # Step 0 — NPU eager bring-up report
 
 Date: 2026-11-20
-Code under test: `sgl-project/sglang-omni` `3b73fdf38`, fork branch `feat/nemotron35-asr-npu`
+Code under test: `sgl-project/sglang-omni` `3b73fdf38` (base), fork branch `feat/nemotron35-asr-npu` `44d1a80ba` (PR 1 changes)
 Model: `nvidia/nemotron-3.5-asr-streaming-0.6b`
 
 ## Hardware and software
@@ -14,7 +14,7 @@ Model: `nvidia/nemotron-3.5-asr-streaming-0.6b`
 | Python | 3.11.18 |
 | torch / torch_npu | 2.9.0+cpu / 2.9.0 |
 | sglang | 0.5.23 (built from source with `pyproject_npu.toml`) |
-| sglang-omni | 0.2.0, editable at `3b73fdf38` |
+| sglang-omni | 0.2.0, editable at base `3b73fdf38`; PR 1 commit `44d1a80ba` |
 | transformers | 5.19.0 |
 | triton-ascend | 3.2.0 |
 | torchaudio / torchvision | 2.9.0 / 0.24.0 |
@@ -43,22 +43,79 @@ The model path does not need custom AscendC operators. Conv2d/Conv1d, LSTM, SDPA
 - `Nemotron3_5ASRModelRunner` used `supports_device_streams`, which deliberately excludes NPU, so the streaming path skipped device synchronization. Tokens were still correct, but the measured window time was underreported. The fix is to use `has_device_streams`, matching the ARK-ASR NPU enablement.
 - The realtime adapter for this model defaulted to `SessionLimits()` (30 s operation timeout, 16 pending chunks). A first NPU window can exceed 30 s once server startup overhead is included. The fix is to pass the realtime audio-session limits used by other native session models: 300 s, 64 pending chunks.
 
-## Reproduction
+## Pod sizing for the next run
 
-Environment setup:
+| Host memory cgroup | Expected outcome |
+|---|---|
+| 8 GiB | Fails; this Step 0 pod |
+| 16 GiB | Expected minimum for server `/v1/realtime`, with serial TBE compilation; not yet validated |
+| 32 GiB | Recommended; leaves room for page cache, kernel cache and debugging |
+
+NPU memory does not need to change: 32 GB HBM is ample for a 0.64B model in float32 or bfloat16. Reserve at least 10 GB of disk for the model, logs and a possible compile cache.
+
+Keep these settings on the next pod unless TBE compilation has been prewarmed:
 
 ```bash
-git clone https://github.com/hereisaway/sglang-omni.git
-cd sglang-omni
-git switch feat/nemotron35-asr-npu
+export TBE_PARALLEL_COMPILER=0
+export TBE_OP_PARALLEL_COMPILER=0
+export MAX_COMPILE_CORE_NUMBER=1
+```
 
+If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.12, torch/torch_npu 2.10), prefer that validated stack and adjust only the sglang-omni install to `scripts/npu/install_npu.sh`.
+
+## Handoff state
+
+- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is pushed at `44d1a80ba`. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests. No pull request has been opened.
+- `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status and `scripts/step0/`.
+- Issue #4310 and the #1597 checklist have not been updated beyond the original claim.
+
+Remaining work, in order:
+
+1. On a pod with at least 16 GiB host memory, run server `/v1/realtime` end to end and record the first-window latency.
+2. Run multilingual parity for float32 and bfloat16 on en/zh/de/ja before calling M0 correct.
+3. Open the PR from the fork branch and update #4310 with the Step 0 evidence.
+4. Start M1: decide whether NPU encoder graph capture is viable, otherwise document the eager fallback.
+
+## Reproduction
+
+Clone the fork branch first:
+
+```bash
+git clone https://github.com/hereisaway/sglang-omni.git /opt/atomgit/sglang-omni
+cd /opt/atomgit/sglang-omni
+git switch -c feat/nemotron35-asr-npu origin/feat/nemotron35-asr-npu
+```
+
+The pod already provided torch 2.9.0+cpu, torch_npu 2.9.0 and CANN 9.2.1. The remaining install used the Huawei PyPI mirror and these pins:
+
+```bash
+# Pod-specific: the preinstalled venv was root-owned.
+sudo chown -R atomgit:atomgitgroup /opt/venv
+pip install -U "huggingface_hub[hf_xet]" hf_transfer
+
+# sglang 0.5.23 from source with the NPU manifest.
 git clone --depth 1 --branch v0.5.23 https://github.com/sgl-project/sglang.git /opt/atomgit/sglang
 cd /opt/atomgit/sglang
 cp python/pyproject_npu.toml python/pyproject.toml
 SETUPTOOLS_SCM_PRETEND_VERSION=0.5.23 pip install -e python
+
+# sglang-omni dependencies from pyproject_npu.toml, with the base stack pinned.
+cd /opt/atomgit/sglang-omni
+python - <<'PY' > /tmp/omnireq.txt
+import tomllib
+d = tomllib.load(open("pyproject_npu.toml", "rb"))
+print("\n".join(d["project"]["dependencies"]))
+PY
+printf '%s\n' \
+  'torch==2.9.0' 'torch_npu==2.9.0' \
+  'numpy==1.26.4' 'pandas==2.2.3' 'soundfile==0.13.1' \
+  'torchaudio==2.9.0' 'torchvision==0.24.0' > /tmp/constraints.txt
+pip install -r /tmp/omnireq.txt -c /tmp/constraints.txt
+pip install "triton-ascend==3.2.0" pybind11 "torchaudio==2.9.0" pytest pytest-asyncio ruff -c /tmp/constraints.txt
+pip install -e . --no-deps
 ```
 
-The pod environment was prepared with the Huawei PyPI mirror. Python dependencies for `sglang-omni` came from `pyproject_npu.toml` with torch, torch_npu, numpy and soundfile pinned to the versions above.
+For a clean pod, prefer installing `sglang-omni` against `pyproject_npu.toml` instead of the default CUDA manifest so package metadata matches the NPU stack. This pod used the default manifest with `--no-deps`; runtime behavior is the same, but `pip check` reports the CUDA torch pins as conflicts.
 
 Model download from the Hugging Face mirror:
 

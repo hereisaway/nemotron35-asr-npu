@@ -19,7 +19,9 @@ Eager NPU bring-up is done on 1x Ascend 910B4 (A2, 32 GB HBM) under an 8 GiB hos
 
 Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
 
-Step 0 found two code changes for PR 1: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one.
+Step 0 found two code changes for PR 1: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. Both changes, the NPU example config and unit tests are pushed on `feat/nemotron35-asr-npu` at `44d1a80ba`; no pull request has been opened yet. The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one.
+
+The next pod should provide at least 16 GiB host memory to finish server `/v1/realtime`; 32 GiB is recommended. 16 GiB is the expected minimum and has not been validated yet. The 32 GB HBM on 910B4 is already sufficient. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
 ## Issue and tracking
 
@@ -87,7 +89,7 @@ Step 0 found two code changes for PR 1: NPU streaming must synchronize through `
 
 - CANN op coverage for RNN-T decoder / conv encoder / streaming state.
 - NPU graph capture support (ATB/FIA) and its interaction with streaming buckets.
-- 910B3 (A2) is not the A3 reference used in #2076; maintainers may ask for A3 results.
+- The test pod is 910B4 (A2, 32 GB), not the 910B3 target and not the A3 reference used in #2076; maintainers may ask for A3 results.
 - NPU toolchain maturity (operator libs / drivers / build), noted in #1597 comments.
 
 ## Next actions
@@ -96,6 +98,6 @@ Step 0 found two code changes for PR 1: NPU streaming must synchronize through `
 2. [done] Pin and record the exact CANN / torch_npu / sglang-omni versions.
 3. [done] Run the NPU eager path and the in-process streaming path for float32 and bfloat16.
 4. (Optional) Ask @ping1jing2 to add @hereisaway as a co-assignee and confirm whether 910B4 (A2) results are enough or A3 validation is needed.
-5. Finish server `/v1/realtime` on a larger-memory host, then run multilingual parity.
-6. Land PR 1: `has_device_streams` synchronization, realtime session limits, NPU example config, cookbook and installation notes.
-7. Record all commands and logs under `logs/` and `scripts/step0/`.
+5. Start the next pod with at least 16 GiB host memory (32 GiB recommended), then finish server `/v1/realtime` and run multilingual parity.
+6. [done] Push PR 1 changes: `has_device_streams` synchronization, realtime session limits, NPU example config, cookbook and installation notes, unit tests. Open the pull request from `feat/nemotron35-asr-npu` at `44d1a80ba`.
+7. [done] Record commands and reproduction scripts under `docs/step0-report.md` and `scripts/step0/`.
