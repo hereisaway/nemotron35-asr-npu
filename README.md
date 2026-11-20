@@ -31,7 +31,7 @@ FLEURS en/de/ja/zh (4 clips each) shows that the **HF/vendor inference path is b
 - A NeMo-Speech.cpp `q8_0` GGUF reference (ASR-only build, CPU) transcribes all 16 clips, with mean WER 0.14 against the FLEURS references (en 0.12, de 0.04, ja 0.16, zh 0.22).
 - HF-NPU vs GGUF WER is 0.92 and HF-CPU vs GGUF is 0.89, with 0/16 exact matches. float32 and bfloat16 agree with each other on 15/16, so NPU matches CPU behavior; it is not an NPU regression.
 
-This should be filed as a separate upstream issue for the HF/vendor path and should not block NPU enablement. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
+Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385); it should not block NPU enablement. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
 
 ## Issue and tracking
 
@@ -47,6 +47,9 @@ This should be filed as a separate upstream issue for the HF/vendor path and sho
   - Title: `[NPU] Nemotron 3.5 ASR: eager execution and realtime session limits`
   - Status: draft, open; one commit `44d1a80ba`, nine files.
 - Step 0 status comment: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
+- HF/vendor inference bug: https://github.com/sgl-project/sglang-omni/issues/4385
+  - Title: `[Bug][Nemotron 3.5 ASR] HF/vendor path emits blank transcripts while the GGUF reference transcribes correctly`
+  - Status: open; GGUF reference workaround documented, NPU PR unaffected.
 - Related:
   - Roadmap focus: https://github.com/sgl-project/sglang-omni/issues/1081
   - Precedent for NPU model tracking: https://github.com/sgl-project/sglang-omni/issues/2076
@@ -105,7 +108,7 @@ This should be filed as a separate upstream issue for the HF/vendor path and sho
 - NPU graph capture support (ATB/FIA) and its interaction with streaming buckets.
 - The test pod is 910B4 (A2, 32 GB), not the 910B3 target and not the A3 reference used in #2076; maintainers may ask for A3 results.
 - NPU toolchain maturity (operator libs / drivers / build), noted in #1597 comments.
-- The HF/vendor Nemotron 3.5 inference path is broken relative to the GGUF reference: 13/16 FLEURS clips blank on NPU, 9/16 on CPU, 0/16 exact matches, while the NeMo-Speech.cpp `q8_0` GGUF transcribes all 16. This is not NPU-specific and should be filed upstream separately.
+- The HF/vendor Nemotron 3.5 inference path is broken relative to the GGUF reference: 13/16 FLEURS clips blank on NPU, 9/16 on CPU, 0/16 exact matches, while the NeMo-Speech.cpp `q8_0` GGUF transcribes all 16. This is not NPU-specific; filed as #4385.
 
 ## Next actions
 
@@ -116,7 +119,10 @@ This should be filed as a separate upstream issue for the HF/vendor path and sho
 5. [done] Start a pod with more host memory (64 GiB) and finish server `/v1/realtime`.
 6. [done] Record commands and reproduction scripts under `docs/step0-report.md` and `scripts/step0/`.
 7. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
-8. File the HF/vendor Nemotron 3.5 inference bug upstream (blank/unstable transcripts vs GGUF).
+8. [done] File the HF/vendor Nemotron 3.5 inference bug upstream: #4385.
 9. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
 10. Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
-11. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend` before changing NPU graph eligibility.
+11. M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; enable NPU graph capture or document the eager fallback.
+12. M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly.
+13. M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
+14. After #4385 is fixed: re-run en/de/ja/zh parity and close M0.

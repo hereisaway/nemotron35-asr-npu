@@ -69,7 +69,7 @@ FLEURS en/de/ja/zh, 4 clips per locale, float32 and bfloat16, via `scripts/step0
 - The GGUF reference transcribes every clip and is close to the FLEURS ground truth, so the audio and checkpoint are fine.
 - The HF/vendor path blanks or degrades most clips: 13/16 blank on NPU, 9/16 on CPU; 0/16 exact matches against GGUF.
 - float32 and bfloat16 agree on 15/16, and NPU and CPU fail on the same inputs, so this is not an NPU regression. The same behavior appears with native Transformers 5.13/5.19 and with the model card's `bcn_weather.mp3` example.
-- Conclusion: the HF/vendor Nemotron 3.5 inference path is broken relative to the reference runtime. File this upstream separately; it should not block NPU enablement.
+- Conclusion: the HF/vendor Nemotron 3.5 inference path is broken relative to the reference runtime. Filed as #4385; it should not block NPU enablement.
 
 JSON artifacts are written under `logs/` and are git-ignored. Reference build: CMake 4.4.5 from pip, SentencePiece 0.2.1 static from the PyPI sdist into `.deps/sentencepiece`, llama.cpp submodule `bd4f514`, configured ASR-only and run with `--backend cpu`:
 
@@ -125,14 +125,17 @@ If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.
 - `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is pushed at `44d1a80ba`. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests. Draft PR #4381 is open.
 - `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status, `scripts/step0/` and the multilingual parity script.
 - Issue #4310 was updated on 2026-11-21 with the Step 0 results, the realtime pass and the parity blocker: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
+- The HF/vendor inference bug is filed as #4385: https://github.com/sgl-project/sglang-omni/issues/4385. The GGUF reference confirms the audio and checkpoint are fine; NPU matches CPU behavior, so this does not block the NPU PR.
 
 Remaining work, in order:
 
 1. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
-2. File the HF/vendor Nemotron 3.5 inference bug upstream (blank/unstable transcripts vs GGUF), then re-run parity after a fix.
+2. [done] File the HF/vendor Nemotron 3.5 inference bug upstream: #4385. Re-run parity after a fix.
 3. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
 4. Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
-5. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`, otherwise document the eager fallback.
+5. M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; enable NPU graph capture or document the eager fallback.
+6. M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly.
+7. M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
 
 ## Reproduction
 
@@ -208,6 +211,8 @@ python /path/to/nemotron35-asr-npu/scripts/step0/realtime_client.py --port 8011
 ## Next
 
 1. Land PR #4381 (the `has_device_streams` synchronization fix and the realtime session-limit fix).
-2. File the HF/vendor Nemotron 3.5 inference bug upstream, then re-run multilingual parity after a fix.
+2. Track #4385 and re-run multilingual parity after a fix.
 3. Add the native realtime lifecycle checks requested in #4310.
-4. Start M1: evaluate NPU encoder graph capture, otherwise document the eager fallback.
+4. M1: evaluate NPU encoder graph capture, otherwise document the eager fallback.
+5. M1: measure streaming latency and throughput at c1 and higher concurrency; record the SKU.
+6. M2: add device-sensitive tests, Ascend CI coverage if a runner is available, and finalize PR results/limitations.
