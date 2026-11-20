@@ -52,16 +52,44 @@ Same 910B4 (A2, 32 GB HBM), same pins, with a 64 GiB host-memory cgroup. `sglang
 
 The server run used `--asr.factory.enable_encoder_cuda_graph false --enable-realtime` with serial TBE compilation and was healthy about 55 s after launch. The WebSocket client sent 16 kHz mono PCM16 in 640-byte chunks, waited 30 s for the first-window compile, then resumed and ended with `sglang.input_audio.end`.
 
-### Multilingual parity (blocked)
+### Multilingual parity: HF path vs GGUF reference
 
-FLEURS en/de/ja/zh, 4 clips per locale, float32 and bfloat16, via `scripts/step0/multilingual_parity.py`:
+FLEURS en/de/ja/zh, 4 clips per locale, float32 and bfloat16, via `scripts/step0/multilingual_parity.py`. A NeMo-Speech.cpp `q8_0` GGUF reference (`nemotron-3.5-asr-streaming-0.6b.q8_0.gguf`, ASR-only CPU build) was run on the same 16 clips.
 
-- 13/16 clips produce empty transcripts on NPU (12/16 with peak normalization). Mean WER is 0.86-1.00 but is not meaningful because most hypotheses are empty.
-- float32 and bfloat16 produce identical transcripts on 15/16 clips.
-- The same blanks reproduce on CPU with the same vendor code, with native Transformers 5.13 and 5.19, and with the model card's own `bcn_weather.mp3` example. This is not NPU-specific.
-- NPU and CPU disagree on 8/16 unstable clips; no exact transcript matches among the non-empty ones.
+| Locale | GGUF WER vs FLEURS | HF-NPU blank | HF-NPU WER vs GGUF | HF-CPU WER vs GGUF |
+|---|---|---|---|---|
+| en_us | 0.121 | 3/4 | 0.939 | 1.000 |
+| de_de | 0.044 | 3/4 | 0.893 | 0.917 |
+| ja_jp | 0.163 | 3/4 | 0.851 | 0.665 |
+| cmn_hans_cn | 0.216 | 4/4 | 1.000 | 0.991 |
+| overall | 0.136 | 13/16 | 0.921 | 0.893 |
 
-A NeMo / NeMo-Speech.cpp GGUF reference is needed before M0 parity can be claimed. JSON artifacts are written under `logs/` and are git-ignored.
+`ja_jp` and `cmn_hans_cn` are scored character-level (CER).
+
+- The GGUF reference transcribes every clip and is close to the FLEURS ground truth, so the audio and checkpoint are fine.
+- The HF/vendor path blanks or degrades most clips: 13/16 blank on NPU, 9/16 on CPU; 0/16 exact matches against GGUF.
+- float32 and bfloat16 agree on 15/16, and NPU and CPU fail on the same inputs, so this is not an NPU regression. The same behavior appears with native Transformers 5.13/5.19 and with the model card's `bcn_weather.mp3` example.
+- Conclusion: the HF/vendor Nemotron 3.5 inference path is broken relative to the reference runtime. File this upstream separately; it should not block NPU enablement.
+
+JSON artifacts are written under `logs/` and are git-ignored. Reference build: CMake 4.4.5 from pip, SentencePiece 0.2.1 static from the PyPI sdist into `.deps/sentencepiece`, llama.cpp submodule `bd4f514`, configured ASR-only and run with `--backend cpu`:
+
+```bash
+python -m pip install --target /tmp/cmake_pkg "cmake>=3.26"
+export PYTHONPATH=/tmp/cmake_pkg
+CMAKE="python -m cmake"
+# SentencePiece 0.2.1 static from the PyPI sdist (source is in the sentencepiece/ subdir)
+$CMAKE -G Ninja -S sentencepiece -B /tmp/sp_build -DCMAKE_BUILD_TYPE=Release \
+  -DSPM_BUILD_TEST=OFF -DSPM_ENABLE_SHARED=OFF
+$CMAKE --build /tmp/sp_build --target sentencepiece-static -j 16
+# install libsentencepiece.a + sentencepiece_processor.h under .deps/sentencepiece/{lib,include}
+$CMAKE -G Ninja -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+  -DNEMO_SPEECH_BUILD_ASR=ON -DNEMO_SPEECH_BUILD_DIAR=OFF -DNEMO_SPEECH_BUILD_TTS=OFF \
+  -DNEMO_SPEECH_BUILD_NMT=OFF -DNEMO_SPEECH_BUILD_S2S=OFF -DNEMO_SPEECH_BUILD_SPEECHLM=OFF \
+  -DNEMO_SPEECH_BUILD_CLI=ON -DNEMO_SPEECH_BUILD_MIC_CAPTURE=OFF -DNEMO_SPEECH_BUILD_HTTP=OFF \
+  -DNEMO_SPEECH_BUILD_GRPC=OFF
+$CMAKE --build build -j 32
+./build/bin/nemo-speech transcribe clip.wav -m <model.q8_0.gguf> -l en-US --backend cpu -f text
+```
 
 ## Findings
 
@@ -100,10 +128,11 @@ If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.
 
 Remaining work, in order:
 
-1. Build a NeMo / NeMo-Speech.cpp (GGUF) reference and re-run multilingual parity for float32 and bfloat16 on en/zh/de/ja.
-2. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
-3. Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
-4. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`, otherwise document the eager fallback.
+1. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
+2. File the HF/vendor Nemotron 3.5 inference bug upstream (blank/unstable transcripts vs GGUF), then re-run parity after a fix.
+3. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
+4. Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
+5. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`, otherwise document the eager fallback.
 
 ## Reproduction
 
@@ -179,6 +208,6 @@ python /path/to/nemotron35-asr-npu/scripts/step0/realtime_client.py --port 8011
 ## Next
 
 1. Land PR #4381 (the `has_device_streams` synchronization fix and the realtime session-limit fix).
-2. Establish a NeMo / NeMo-Speech.cpp reference and re-run multilingual parity before claiming M0 correctness.
+2. File the HF/vendor Nemotron 3.5 inference bug upstream, then re-run multilingual parity after a fix.
 3. Add the native realtime lifecycle checks requested in #4310.
 4. Start M1: evaluate NPU encoder graph capture, otherwise document the eager fallback.

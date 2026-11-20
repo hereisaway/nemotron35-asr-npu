@@ -25,7 +25,13 @@ The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torc
 
 ## Multilingual parity status (2026-11-21)
 
-FLEURS en/de/ja/zh (4 clips each) was run for float32 and bfloat16 and is not usable as an M0 parity signal yet. The current HF/vendor inference path emits blank or unstable transcripts on most clips (13/16 blank on NPU). The same happens on CPU with the same code, with native Transformers 5.13 and 5.19, and with the model card's own `bcn_weather.mp3` example, so this is not NPU-specific. NPU and CPU also disagree on those unstable clips; float32 and bfloat16 agree on 15/16. Follow-up: compare against a NeMo / NeMo-Speech.cpp GGUF reference before claiming M0 correctness. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
+FLEURS en/de/ja/zh (4 clips each) shows that the **HF/vendor inference path is broken relative to the model's reference runtime**, on CPU and NPU alike:
+
+- The HF/vendor path emits blank or unstable transcripts on most clips: 13/16 blank on NPU and 9/16 on CPU. Native Transformers 5.13/5.19 and the model card's own `bcn_weather.mp3` example behave the same way.
+- A NeMo-Speech.cpp `q8_0` GGUF reference (ASR-only build, CPU) transcribes all 16 clips, with mean WER 0.14 against the FLEURS references (en 0.12, de 0.04, ja 0.16, zh 0.22).
+- HF-NPU vs GGUF WER is 0.92 and HF-CPU vs GGUF is 0.89, with 0/16 exact matches. float32 and bfloat16 agree with each other on 15/16, so NPU matches CPU behavior; it is not an NPU regression.
+
+This should be filed as a separate upstream issue for the HF/vendor path and should not block NPU enablement. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
 
 ## Issue and tracking
 
@@ -99,7 +105,7 @@ FLEURS en/de/ja/zh (4 clips each) was run for float32 and bfloat16 and is not us
 - NPU graph capture support (ATB/FIA) and its interaction with streaming buckets.
 - The test pod is 910B4 (A2, 32 GB), not the 910B3 target and not the A3 reference used in #2076; maintainers may ask for A3 results.
 - NPU toolchain maturity (operator libs / drivers / build), noted in #1597 comments.
-- The HF/vendor Nemotron inference path emits blank or unstable transcripts on most FLEURS clips, on CPU and NPU alike, including the model card's own `bcn_weather.mp3` example. Multilingual M0 parity needs a NeMo / NeMo-Speech.cpp reference first.
+- The HF/vendor Nemotron 3.5 inference path is broken relative to the GGUF reference: 13/16 FLEURS clips blank on NPU, 9/16 on CPU, 0/16 exact matches, while the NeMo-Speech.cpp `q8_0` GGUF transcribes all 16. This is not NPU-specific and should be filed upstream separately.
 
 ## Next actions
 
@@ -109,7 +115,8 @@ FLEURS en/de/ja/zh (4 clips each) was run for float32 and bfloat16 and is not us
 4. [done] Push PR 1 changes and open draft PR #4381.
 5. [done] Start a pod with more host memory (64 GiB) and finish server `/v1/realtime`.
 6. [done] Record commands and reproduction scripts under `docs/step0-report.md` and `scripts/step0/`.
-7. Build a NeMo / NeMo-Speech.cpp (GGUF) reference and re-run en/de/ja/zh parity.
-8. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
-9. Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
-10. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend` before changing NPU graph eligibility.
+7. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
+8. File the HF/vendor Nemotron 3.5 inference bug upstream (blank/unstable transcripts vs GGUF).
+9. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
+10. Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
+11. Start M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend` before changing NPU graph eligibility.
