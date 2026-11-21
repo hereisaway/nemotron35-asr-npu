@@ -17,9 +17,15 @@ XPU already has a recipe. Do not duplicate those paths.
 
 Eager NPU bring-up is complete on 1x Ascend 910B4 (A2, 32 GB HBM). It was first brought up under an 8 GiB host-memory cgroup, where server `/v1/realtime` could not finish first-window TBE compilation. On a follow-up pod with a 64 GiB host-memory cgroup, `/v1/realtime` now passes end to end (`final='What is happening in this video'`) and the offline and streaming eager paths still reproduce the Step 0 transcripts. Details and commands: [docs/step0-report.md](docs/step0-report.md). Reproduction scripts: `scripts/step0/`.
 
+The same 64 GiB pod also finished the remaining issue work:
+
+- **Lifecycle** — slot reuse (A → empty B → A), interleaved sessions, mid-stream disconnect/reconnect and socket-close cancellation all pass warm. Closing the socket during the *first-window* compile surfaces a transient 30 s `session_open_timeout` on the next session; the server self-heals, and `response.cancel` is not implemented for native transcription sessions. `scripts/step0/realtime_lifecycle.py`.
+- **M1 performance (eager, fp32)** — steady window cost is flat at ~0.07 s per 320 ms window from c1 to c4 (median 0.0758 / 0.0711 / 0.0698 s, p95 ≤ 0.0811 s); aggregate RTF 4.1x / 7.9x / 13.5x. A novel batch shape pays 14–15 s of TBE compilation on its first window. Peak host RSS 4.6 GB. `scripts/step0/bench_streaming.py`.
+- **NPU graph capture** — capture still fails at `AclmdlRICaptureEnd` 107025 ("capture model contains a stream that was not joined to the origin stream") on both dedicated and current streams. Op-level bisect shows conv1d/linear/SDPA/one_hot capture while `nn.LSTM` (DynamicRNN aclop) does not. Decision: keep the documented eager fallback for M1; enabling capture is a separate change. `scripts/step0/npu_graph_probe.py`, `scripts/step0/npu_capture_ops.py`.
+
 Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
 
-Two code changes are on `feat/nemotron35-asr-npu` at `44d1a80ba`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. Draft PR: [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped.
+Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `a9e5996` as `ae62c57`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. Draft PR: [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
 
 The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
@@ -93,9 +99,9 @@ Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issue
 - [x] Finish server `/v1/realtime` validation on a host with more than the 8 GiB cgroup used in Step 0 — passed on a 64 GiB cgroup
 
 ### M1 — performance
-- [ ] Decide: extend graph capture to NPU (new backend) or document eager fallback
-- [ ] Measure streaming window / latency / throughput at c1 and higher concurrency
-- [ ] Record SKU explicitly (910B3/A2 vs #2076's A3 reference)
+- [x] Decide: extend graph capture to NPU (new backend) or document eager fallback — capture fails in `AclmdlRICaptureEnd` (cross-stream); keep the eager fallback and track capture as a separate change
+- [x] Measure streaming window / latency / throughput at c1 and higher concurrency — `logs/bench_fp32_c124.json`, ~0.07 s per 320 ms window, aggregate RTF 4.1x/7.9x/13.5x at c1/c2/c4
+- [x] Record SKU explicitly (910B3/A2 vs #2076's A3 reference) — every number is labelled 910B4 (A2, 32 GB HBM)
 
 ### M2 — coverage
 - [ ] Add/extend unit tests if any are device-sensitive
@@ -120,9 +126,9 @@ Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issue
 6. [done] Record commands and reproduction scripts under `docs/step0-report.md` and `scripts/step0/`.
 7. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
 8. [done] File the HF/vendor Nemotron 3.5 inference bug upstream: #4385.
-9. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
-10. Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
-11. M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; enable NPU graph capture or document the eager fallback.
-12. M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly.
-13. M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
-14. After #4385 is fixed: re-run en/de/ja/zh parity and close M0.
+9. [done] Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio. Warm paths pass; cold-compile cancellation leaves a transient `session_open_timeout` documented in the report.
+10. [open] Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
+11. [done] M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; NPU capture fails in `AclmdlRICaptureEnd`, so the eager fallback is documented and capture is a separate change.
+12. [done] M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly (910B4).
+13. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations. Branch rebased onto `main@a9e5996` (`ae62c57`), 58 passed / 5 skipped; no NPU CI runner.
+14. [blocked] After #4385 is fixed: re-run en/de/ja/zh parity and close M0.

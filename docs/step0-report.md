@@ -91,6 +91,83 @@ $CMAKE --build build -j 32
 ./build/bin/nemo-speech transcribe clip.wav -m <model.q8_0.gguf> -l en-US --backend cpu -f text
 ```
 
+## Realtime lifecycle checks (2026-11-21)
+
+Run against the server (`--enable-realtime`, fp32, 64 GiB host cgroup) with
+`scripts/step0/realtime_lifecycle.py`. The 16 kHz-only audio that transcribes
+on the vendor/HF path is `tests/data/query_to_draw.wav`; every other clip in
+`tests/data` returns an empty transcript (#4385), so the "blank" session uses
+a resampled `query_to_cars.wav` and is expected to stay empty.
+
+| Scenario | Result | Evidence |
+|---|---|---|
+| Slot reuse A → blank B → A | pass | A repeats exactly (`What is happening in this video`); the empty session does not leak encoder state |
+| Interleaved sessions (A + blank B) | pass | the good stream matches the single-session reference; no cross-talk |
+| Disconnect mid-stream, then reconnect | pass | recovered session transcribes correctly; no leaked stage session |
+| Close socket during a window | pass (warm) | follow-up session transcribes correctly; `/health` settles to zero requests |
+| Close socket during the *first-window* compile (cold) | **fails transiently** | next `session.update` trips `session_open_timeout` after 30 s; the server self-heals and the following session works |
+
+Details on the cold-cancel failure:
+
+- Closing the socket aborts the coordinator request immediately
+  (`Coordinator aborted req=...`), but the stage is inside an uninterruptible
+  TBE compilation for that window. The next session's admission queues behind
+  it and exceeds the 30 s session-open deadline (`DEFAULT_OPERATION_TIMEOUT_S`),
+  so the server answers `{"code": "session_open_timeout"}`.
+- `--realtime-session-update-timeout-s 300` does **not** change this: that flag
+  bounds the wait for the first `session.update`, not stage admission.
+- `response.cancel` is not implemented for native transcription sessions; the
+  server returns `not_supported` (`this session does not cancel responses`).
+  Cancellation has to be expressed by closing the socket.
+- This is a cold-start-only edge case (it needs an aborted compile in flight).
+  Documenting it is enough for the eager PR; a follow-up can either honour the
+  session's `operation_timeout_s` on the stage side or skip admission retries
+  while a compile is running.
+
+## M1 eager performance (2026-11-21)
+
+Single process, fp32, `Nemotron3_5ASRModelRunner`, 5.06 s of audio (15 windows
+of 320 ms), 910B4 (A2, 32 GB HBM), `scripts/step0/bench_streaming.py`
+(`logs/bench_fp32_c124.json`):
+
+| Concurrency | First window | Steady median | Steady p95 | Wall | Aggregate RTF |
+|---|---|---|---|---|---|
+| c1 | 14.37 s (cold compile) | 0.0758 s | 0.0811 s | 1.23 s | 4.1x |
+| c2 | 0.58 s (new batch shape) | 0.0711 s | 0.0775 s | 1.28 s | 7.9x |
+| c4 | 0.082 s (cache warm) | 0.0698 s | 0.0762 s | 1.50 s | 13.5x |
+
+- Steady-state window cost is flat at ~0.07 s per 320 ms window from c1 to c4;
+  batching four streams costs ~1.2x the single-stream wall time.
+- The first window of a novel shape pays 14–15 s of TBE compilation; the
+  second and later runs in the same process are warm.
+- Peak host RSS for the in-process runner, including weights, was 4.6 GB.
+- These are eager numbers: encoder graph capture is still unavailable on NPU.
+
+## NPU graph capture probe (2026-11-21)
+
+The platform already returns `NpuDeviceGraphBackend`, but
+`GRAPH_CAPTURE_DEVICE_TYPES` only lists cuda/xpu. `scripts/step0/npu_graph_probe.py`
+adds `npu` at runtime and builds the runner with
+`enable_encoder_cuda_graph=True`:
+
+| Attempt | Result |
+|---|---|
+| Capture on the runner's dedicated stream | fail in 15.5 s |
+| Capture on the current stream | fail in 15.8 s |
+| Error | `AclmdlRICaptureEnd` 107025: `capture model contains a stream that was not joined to the origin stream` |
+
+Op-level bisect (`scripts/step0/npu_capture_ops.py`, with
+`allow_internal_format=False` as the backend sets it): `linear`, `conv1d`,
+`scaled_dot_product_attention` and `one_hot` capture; `nn.LSTM` fails with
+`Cannot run aclop operators during NPU graph capture ... aclop is DynamicRNN`.
+The LSTM lives in the decoder prediction network, not in the captured encoder
+region, so the encoder failure is a cross-stream capture issue inside the
+pooled-cache encoder path rather than one missing kernel.
+
+Decision for M1: keep the documented eager fallback. Enabling NPU graph capture
+needs either aclnn coverage for the internal stream (or an event record joining
+it) and should be its own change, with the eager numbers below as the baseline.
+
 ## Findings
 
 - TBE compiles the model's kernels on first use in each process, taking about 20 s for the streaming first window. Later windows in the same process are fast.
@@ -122,7 +199,7 @@ If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.
 
 ## Handoff state
 
-- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is pushed at `44d1a80ba`. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests. Draft PR #4381 is open.
+- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is rebased onto `main@a9e5996` locally as `ae62c57` (still to push). It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests. Draft PR #4381 is open; 58 passed / 5 skipped after the rebase.
 - `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status, `scripts/step0/` and the multilingual parity script.
 - Issue #4310 was updated on 2026-11-21 with the Step 0 results, the realtime pass and the parity blocker: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
 - The HF/vendor inference bug is filed as #4385: https://github.com/sgl-project/sglang-omni/issues/4385. The GGUF reference confirms the audio and checkpoint are fine; NPU matches CPU behavior, so this does not block the NPU PR.
@@ -131,11 +208,11 @@ Remaining work, in order:
 
 1. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
 2. [done] File the HF/vendor Nemotron 3.5 inference bug upstream: #4385. Re-run parity after a fix.
-3. Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio.
-4. Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
-5. M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; enable NPU graph capture or document the eager fallback.
-6. M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly.
-7. M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
+3. [done] Add the native realtime lifecycle checks requested in #4310; see the lifecycle section above (cold-compile cancellation is documented as a transient limitation).
+4. [open] Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
+5. [done] M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; capture fails in `AclmdlRICaptureEnd`, eager fallback documented.
+6. [done] M1: measure streaming window latency and throughput at c1/c2/c4; SKU 910B4 recorded.
+7. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
 
 ## Reproduction
 
