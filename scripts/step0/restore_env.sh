@@ -67,16 +67,29 @@ pip install "torch==2.9.0" "torchvision==0.24.0" "torchaudio==2.9.0" \
 pip install "torch_npu==2.9.0"
 
 log "sglang-omni fork branch $FORK_BRANCH"
+
+# The branch head as a tarball. Also repairs a clone whose checkout stopped
+# part-way: git can exit 0 while leaving the worktree incomplete on flaky
+# links, and extracting over it keeps the .git directory and the same tree.
+fetch_omni_tarball() {
+  echo "falling back to the codeload tarball of $FORK_BRANCH" >&2
+  mkdir -p "$OMNI_DIR"
+  curl -L --retry 5 --retry-all-errors \
+    "https://codeload.github.com/hereisaway/sglang-omni/tar.gz/refs/heads/$FORK_BRANCH" \
+    | tar xz -C "$OMNI_DIR" --strip-components=1
+}
+
 if [[ ! -d "$OMNI_DIR/.git" ]]; then
-  if ! git -c http.version=HTTP/1.1 clone --depth 1 --single-branch \
-      --branch "$FORK_BRANCH" "$FORK_REPO" "$OMNI_DIR"; then
-    echo "git clone failed; falling back to the codeload tarball" >&2
-    rm -rf "$OMNI_DIR"
-    mkdir -p "$OMNI_DIR"
-    curl -L --retry 5 --retry-all-errors \
-      "https://codeload.github.com/hereisaway/sglang-omni/tar.gz/refs/heads/$FORK_BRANCH" \
-      | tar xz -C "$OMNI_DIR" --strip-components=1
-  fi
+  git -c http.version=HTTP/1.1 clone --depth 1 --single-branch \
+    --branch "$FORK_BRANCH" "$FORK_REPO" "$OMNI_DIR" \
+    || fetch_omni_tarball
+fi
+
+# The package directory is the cheapest proof that the checkout is usable;
+# a partial clone otherwise fails later at `pip install -e .` with a
+# misleading ModuleNotFoundError.
+if [[ ! -f "$OMNI_DIR/sglang_omni/__init__.py" ]]; then
+  fetch_omni_tarball
 fi
 cd "$OMNI_DIR"
 
