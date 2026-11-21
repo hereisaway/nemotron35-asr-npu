@@ -219,10 +219,12 @@ If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.
 
 ## Handoff state
 
-- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is rebased onto `main@a9e5996`, pushed as `ae62c57`, and PR #4381 is marked ready for review. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests; 58 passed / 5 skipped after the rebase. CI waits on maintainer workflow approval (`action_required`).
-- `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status, `scripts/step0/` and the multilingual parity script.
+- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is rebased onto `main@e698f755`, pushed as `81c68c20`, and PR #4381 is marked ready for review. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests; 58 passed / 5 skipped after the rebase. CI waits on maintainer workflow approval (`action_required`).
+- `hereisaway/sglang-omni` branch `fix/nemotron-npu-sdpa-bias` (one commit on `main@e698f755`) carries the #4385 fix, pushed as PR #4445. Three files, +64/−10; the regression test fails on the previous code.
+- `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status, `scripts/step0/`, the multilingual parity script and the #4385 investigation.
 - Issue #4310 was updated on 2026-11-21 with the Step 0 results, the realtime pass and the parity blocker: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
-- The HF/vendor inference bug is filed as #4385: https://github.com/sgl-project/sglang-omni/issues/4385. The GGUF reference confirms the audio and checkpoint are fine; NPU matches CPU behavior, so this does not block the NPU PR.
+- Issue #4385 now carries the root cause and the corrected parity: https://github.com/sgl-project/sglang-omni/issues/4385#issuecomment-7063506600
+- The NeMo reference used for the investigation is `nemo_toolkit==3.0.0` in `/opt/atomgit/venv-nemo` with the official `nemotron-3.5-asr-streaming-0.6b.nemo` checkpoint.
 
 Remaining work, in order:
 
@@ -232,7 +234,8 @@ Remaining work, in order:
 4. [open] Confirm with @ping1jing2 whether 910B4 (A2) evidence is sufficient or 910B3 is required.
 5. [done] M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; capture fails in `AclmdlRICaptureEnd`, eager fallback documented.
 6. [done] M1: measure streaming window latency and throughput at c1/c2/c4; SKU 910B4 recorded.
-7. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations.
+7. [done] Root-cause #4385: the Transformers torch_npu SDPA mask conversion zeroes the relative-position bias. Fix in PR #4445; parity re-measured (0.196 fp32 overall vs the GGUF 0.136).
+8. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 and #4445 with results and limitations.
 
 ## Reproduction
 

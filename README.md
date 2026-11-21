@@ -15,8 +15,9 @@ XPU already has a recipe. Do not duplicate those paths.
 
 ## Where things stand (2026-11-21)
 
-- **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) is ready for review at `ae62c57` (rebased onto `main@a9e5996`, 9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped.
+- **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) is ready for review at `81c68c20` (rebased onto `main@e698f755`, 9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped.
 - **CI is blocked on maintainer approval.** Every PR workflow, including Lint, reports `action_required`; the PR comment asks for the runs to be approved.
+- **The parity bug is root-caused and fixed in review.** #4385 was the Transformers `sdpa_attention_forward` conversion of the model's relative-position bias into an all-masked boolean mask whenever `torch_npu` is importable. [PR #4445](https://github.com/sgl-project/sglang-omni/pull/4445) keeps the bias out of that conversion; all 16 FLEURS clips transcribe again and the corrected fp32 parity is 0.196 overall against the GGUF 0.136.
 - **M1 has a decision and numbers.** Eager streaming is ~0.07 s per 320 ms window from c1 to c4 (aggregate RTF 4.1x/7.9x/13.5x). NPU encoder graph capture is not enabled: SDPA attention creates an internal sub-stream, and with eager attention the full encoder still hits a host↔device copy during capture. That is a separate change, not a blocker for M0.
 - **Open items** are listed under [Next actions](#next-actions): #4381 and #4445 review, 910B3 confirmation, lifecycle unit tests, and the cold-compile cancellation follow-up.
 - **Everything here is reproducible from a fresh pod** with `scripts/step0/restore_env.sh` plus the commands in [docs/step0-report.md](docs/step0-report.md).
@@ -33,7 +34,7 @@ The same 64 GiB pod also finished the remaining issue work:
 
 Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
 
-Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `a9e5996` as `ae62c57`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. PR (ready for review): [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
+Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `e698f755` as `81c68c20`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. PR (ready for review): [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
 
 The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
