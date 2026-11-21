@@ -156,17 +156,30 @@ adds `npu` at runtime and builds the runner with
 | Capture on the current stream | fail in 15.8 s |
 | Error | `AclmdlRICaptureEnd` 107025: `capture model contains a stream that was not joined to the origin stream` |
 
-Op-level bisect (`scripts/step0/npu_capture_ops.py`, with
-`allow_internal_format=False` as the backend sets it): `linear`, `conv1d`,
-`scaled_dot_product_attention` and `one_hot` capture; `nn.LSTM` fails with
-`Cannot run aclop operators during NPU graph capture ... aclop is DynamicRNN`.
-The LSTM lives in the decoder prediction network, not in the captured encoder
-region, so the encoder failure is a cross-stream capture issue inside the
-pooled-cache encoder path rather than one missing kernel.
+Module-level bisect (`scripts/step0/npu_capture_encoder.py`, one process per
+target because a failed capture poisons the process):
 
-Decision for M1: keep the documented eager fallback. Enabling NPU graph capture
-needs either aclnn coverage for the internal stream (or an event record joining
-it) and should be its own change, with the eager numbers below as the baseline.
+| Target | Capture |
+|---|---|
+| subsampling (Conv2d stack), `encode_positions`, `encoder_projector`, `joint`, `feed_forward1`, convolution module | pass |
+| self-attention, default/sdpa | **fail** (107025, stream not joined) |
+| self-attention, `eager` | pass |
+| full encoder, default attention | fail (107025) |
+| full encoder, `eager` attention | fail at `aclrtMemcpy` 107030 (host↔device copy inside capture) |
+
+So the blocker is **not** the LSTM: the decoder prediction network is outside
+the captured encoder region and is never captured. The encoder-side failures
+are (1) the SDPA attention path creating an internal sub-stream, which `eager`
+attention avoids, and (2) a host-side synchronization or scalar read inside the
+full encoder once attention is eager. The conv stack, FFN, positional encoding
+and projectors all capture; the earlier `DynamicRNN` finding only rules out
+capturing the decoder step as-is.
+
+Decision for M1: keep the documented eager fallback for this PR. Enabling NPU
+capture is a separate change with a concrete path: capture with `eager`
+attention and remove the remaining host↔device copy (or make it
+stream-safe) inside the encoder before capture. The eager numbers below are
+the baseline.
 
 ## Findings
 
