@@ -39,26 +39,65 @@ not a platform or sglang-omni streaming-registry bug.
    produce a transcript for the failing clips. Length is not the trigger either:
    the 3 s prefix of `bcn_weather` is already all-blank.
 
-## Localized
+## Root cause: the torch_npu SDPA mask conversion in Transformers
 
-- The encoder/joint numerics diverge between clips. On the failing clips the
-  encoder output spikes to a frame norm of ~20 immediately after the onset
-  (`bcn_weather` 20.5, `query_to_cars` 21.0) while the working clip stays at
-  4.25; joint logits then reach -920 and +3500 with blank winning every frame.
-  On the working clip logits stay within a few tens and non-blank tokens win
-  occasionally.
-- **Onset sensitivity is the strongest lead.** Removing the first 0.25 s of
-  `query_to_draw` yields the exact reference transcript
-  (`What is happening in this video`), while adding 0.5 s of leading silence
-  degrades it into a partial/garbled transcript. That points at the encoder's
-  cache-aware streaming prefix handling (`init_pad` / `left_pad` in
-  `NemotronAsrStreamingConv1dPaddingCache` and the first-chunk path), not at the
-  weights. The GGUF reference transcribing the same clips proves the checkpoint
-  and the audio are fine.
-- `num_lookahead_tokens` (0/3/6/13/57) and `encoder.config.sliding_window`
-  (57 → 5000) produce byte-identical tokens in the offline `generate()` path.
-  Either those knobs do not reach the encoder in the offline path, or the
-  attention mask is fixed at construction; worth checking separately.
+The frontend, the checkpoint and the encoder all match the reference up to the
+first self-attention call:
+
+| Stage | NeMo vs HF cosine |
+|---|---|
+| mel features | max abs diff 1.4e-4 (dither 1e-5) |
+| subsampling | 1.0000 (max abs diff 2e-3) |
+| positional encoding | 1.0000 |
+| layer-0 feed-forward 1 | 1.0000 |
+| **layer-0 self-attention** | **HF output is exactly 0** |
+| layer-0 convolution | 0.86 |
+| full encoder | 0.70 median |
+
+`NemotronAsrStreamingEncoderAttention` passes its relative-position bias matrix
+`matrix_bd` (float, `-inf` for disallowed pairs) as `attention_mask` to the
+attention interface. Transformers 5.19 `sdpa_attention_forward` has an
+NPU-specific branch:
+
+```python
+if _is_torch_npu_available:
+    if attention_mask is not None and attention_mask.dtype != torch.bool:
+        attention_mask = torch.logical_not(attention_mask.bool()).to(query.device)
+```
+
+That branch assumes an additive mask whose zeros mean "keep". The bias matrix
+has no exact zeros, so `bool()` makes every entry `True` and `logical_not`
+makes every entry `False`, which SDPA reads as "every position is masked". The
+attention output is then exactly zero on every frame, and the encoder falls
+back to its convolution/feed-forward residual path: partially intelligible for
+easy audio, all-blank for the rest.
+
+The branch is gated on **`torch_npu` being importable**, not on the tensor
+device, so it also fires on CPU in any environment where `torch_npu` is
+installed. That is why the "HF CPU" runs blanked on the NPU pod.
+
+Disabling the branch for the same three clips reproduces the NeMo reference:
+
+| Clip | Default (torch_npu conversion) | Flag disabled | NeMo reference |
+|---|---|---|---|
+| `bcn_weather` | `''` | `Yesterday it was uh thirty five degrees in Barcelona, but today the temperature will go down to minus uh twenty degrees.` | same |
+| `query_to_draw` | `What is happening in this videos are feeling?` | `What is happening in this video?  Answer in ten words or fewer.` | same |
+| `query_to_cars` | `''` | `Homening cars are there in the picture.` | same |
+
+Setting `_attn_implementation="eager"` is not a workaround: it returns
+degenerate output (590 tokens / 1 blank on `query_to_cars`).
+
+### Fix options
+
+1. Transformers: only apply the NPU conversion to masks that follow the
+   `0`/`-inf` additive convention, or skip it when the caller passes a
+   `position_bias`. The interface already has a `position_bias` argument.
+2. Model port: pass the relative-position bias through `position_bias=` instead
+   of `attention_mask`, and reserve `attention_mask` for padding.
+3. Local workaround on an NPU pod, until either lands:
+   `transformers.integrations.sdpa_attention._is_torch_npu_available = False`
+   (validated above; it also disables the NPU optimization for every model in
+   the process).
 
 ## Separate bug found: blank/pad token ids disagree
 
@@ -74,17 +113,18 @@ tokenizer's pad id (13087), which happens to equal the model's blank id. But
 label-encoding path. This is independent of the blank-transcript bug and easy to
 fix upstream.
 
-## Suggested next step
+## Reference setup
 
-Dump encoder frames from a NeMo runtime for the same clip (the NeMo-Speech.cpp
-GGUF build used in Step 0, or `nemo_toolkit`) and diff them against
-`model.encoder(...)`. The frontend already matches, so the first divergent frame
-identifies the layer; the onset experiment says to look at the first chunk /
-`init_pad` handling.
+`nemo_toolkit==3.0.0` in an isolated venv (`/opt/atomgit/venv-nemo`, reuses the
+validated torch 2.9.0 through a `.pth`), with the official
+`nemotron-3.5-asr-streaming-0.6b.nemo` checkpoint. `pyarrow 16.1.0` and
+`datasets 2.19.0` are required to keep numpy at 1.26.4. The NeMo config confirms
+`normalize: NA`, `dither: 1e-5`, `pad_to: 0`, `causal_downsampling: true`,
+`chunked_limited` with `[-56, 3]`, which matches the HF port's frontend.
 
 ## Reproduction scripts
 
-`/opt/atomgit/audio/probe_*.py` (this pod):
+`/opt/atomgit/audio/` (this pod):
 
 - `repro_hf.py` — token/blank statistics for one clip.
 - `probe_norm.py` — raw vs per-feature vs global normalization.
@@ -96,3 +136,8 @@ identifies the layer; the onset experiment says to look at the first chunk /
   alignment probes.
 - `probe_nemo_features.py` — reference frontend comparison.
 - `probe_layers.py` — per-layer encoder norm trace.
+- `nemo_reference.py` — NeMo transcripts plus encoder/feature dumps.
+- `compare_nemo_hf.py`, `compare_shift.py`, `compare_subsampling.py`,
+  `compare_pos_layer0.py`, `compare_layer_blocks.py` — stage-by-stage diffs.
+- `check_attention.py`, `check_sdpa.py` — mask and attention output inspection.
+- `test_fix.py` — the default vs flag-disabled vs eager comparison above.

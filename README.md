@@ -47,6 +47,8 @@ FLEURS en/de/ja/zh (4 clips each) shows that the **HF/vendor inference path is b
 
 Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385); it should not block NPU enablement. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
 
+Root cause (2026-11-21, [investigation](docs/issue-4385-investigation-2026-11-21.md)): Transformers 5.19 `sdpa_attention_forward` converts any non-bool `attention_mask` to a boolean mask on hosts where `torch_npu` is importable. The model passes its relative-position bias matrix as that mask, so the conversion masks every position and self-attention returns zeros. The frontend, subsampling, positional encoding and layer-0 feed-forward match NeMo exactly; disabling the conversion reproduces the NeMo transcripts on all three probe clips.
+
 ## Issue and tracking
 
 - Dedicated issue: https://github.com/sgl-project/sglang-omni/issues/4310
