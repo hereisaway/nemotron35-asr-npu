@@ -56,7 +56,7 @@ FLEURS en/de/ja/zh (4 clips each), peak-normalized, after the fix:
 - `ja_jp` and `cmn_hans_cn` are character-level. The `de` and `zh` references contain Latin parentheticals and alternate name transliterations, which the character-level score counts as many errors; the transcripts themselves are close.
 - The old 0.92 / 0.89 columns measured the all-zero attention output, not the model's accuracy.
 
-Filed as issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385), fixed by [#4445](https://github.com/sgl-project/sglang-omni/pull/4445). Evaluation script: `scripts/step0/multilingual_parity.py`; per-clip JSON in [`docs/artifacts/2026-11-21/`](docs/artifacts/2026-11-21/README.md).
+Filed as issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385), fixed by [#4445](https://github.com/sgl-project/sglang-omni/pull/4445). Evaluation script: `scripts/step0/multilingual_parity.py`; per-clip JSON in [`docs/artifacts/2026-11-21/`](docs/artifacts/2026-11-21/README.md); probe scripts and the NeMo reference environment in [`scripts/investigations/issue-4385/`](scripts/investigations/issue-4385/README.md).
 
 ## Issue and tracking
 

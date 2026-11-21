@@ -149,7 +149,8 @@ validated torch 2.9.0 through a `.pth`), with the official
 
 ## Reproduction scripts
 
-`/opt/atomgit/audio/` (this pod):
+[`scripts/investigations/issue-4385/`](../scripts/investigations/issue-4385/README.md)
+carries every probe and the NeMo reference environment setup:
 
 - `repro_hf.py` — token/blank statistics for one clip.
 - `probe_norm.py` — raw vs per-feature vs global normalization.
