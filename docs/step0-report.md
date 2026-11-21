@@ -48,6 +48,8 @@ Same 910B4 (A2, 32 GB HBM), same pins, with a 64 GiB host-memory cgroup. `sglang
 | `Nemotron3_5ASRModelRunner` streaming | float32 | Pass | `What is happening in this video`; first window ~16 s, later windows ~0.07 s |
 | `Nemotron3_5ASRModelRunner` streaming | bfloat16 | Pass | Same transcript; total 16.5 s |
 | Server `/v1/realtime` | float32 | Pass | Session and first window complete; `final='What is happening in this video'`, no OOM |
+| Server `/v1/audio/transcriptions` | bfloat16 | Pass | `What is happening video?` (re-validated 2026-11-21) |
+| Server `/v1/realtime` | bfloat16 | Pass | Three sessions, all `final='What is happening in this video'` (re-validated 2026-11-21) |
 | `tests/unit_test/nemotron3_5_asr` | - | Pass | 58 passed, 5 skipped |
 
 The server run used `--asr.factory.enable_encoder_cuda_graph false --enable-realtime` with serial TBE compilation and was healthy about 55 s after launch. The WebSocket client sent 16 kHz mono PCM16 in 640-byte chunks, waited 30 s for the first-window compile, then resumed and ended with `sglang.input_audio.end`.
