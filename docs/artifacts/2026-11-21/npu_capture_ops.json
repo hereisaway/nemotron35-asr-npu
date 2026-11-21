@@ -1,0 +1,34 @@
+[
+  {
+    "op": "linear",
+    "captured": true
+  },
+  {
+    "op": "conv1d",
+    "captured": true
+  },
+  {
+    "op": "lstm",
+    "captured": false,
+    "error_type": "RuntimeError",
+    "error": "Cannot run aclop operators during NPU graph capture. Current working aclop is DynamicRNN. If you need this call to be captured, please try to set torch.npu.config.allow_internal_format = False. If still fail, the operator needs aclnn implementation and please file an issue. Current npuStreamCaptureStatus: npuStreamCaptureStatusActive"
+  },
+  {
+    "op": "matmul_softmax",
+    "captured": true
+  },
+  {
+    "op": "one_hot",
+    "captured": true
+  },
+  {
+    "op": "index_add",
+    "captured": false,
+    "error_type": "RuntimeError",
+    "error": "copy_between_host_and_device_opapi:build/CMakeFiles/torch_npu.dir/compiler_depend.ts:56 NPU function error: aclrtMemcpy, error code is 107030"
+  },
+  {
+    "op": "sdpa",
+    "captured": true
+  }
+]

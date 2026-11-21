@@ -1,0 +1,30 @@
+{
+  "device": "npu",
+  "dtype": "float32",
+  "max_batch_size": 4,
+  "device_types_before": [
+    "cuda",
+    "xpu"
+  ],
+  "device_types_after": [
+    "cuda",
+    "npu",
+    "xpu"
+  ],
+  "backend": "NpuDeviceGraphBackend",
+  "graph_enabled": true,
+  "captured": false,
+  "capture_s": 15.528,
+  "error_type": "RuntimeError",
+  "error": "capture_end:build/CMakeFiles/torch_npu.dir/compiler_depend.ts:231 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 107025\n[ERROR] 2026-11-21-13:29:56 (PID:224343, Device:0, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 224343] 2026-11-21-13:29:56.601.237 Invalid_Argument(EE1017): Capture model validity check failed. Parameter capture model is invalid. Reason: In the cross-stream capture scenario, the last task (task_id=23) on the sub stream (stream_id=12) is not an event record task. Call aclrtRecordEvent on the sub stream to deliver an event record task.\nTraceBack (most recent call last):\n        rtStreamEndCapture execution failed, reason=capture model contains a stream that was not joined to the origin stream[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]\n",
+  "traceback_tail": [
+    "  File \"/opt/venv/lib/python3.11/site-packages/torch_npu/npu/graphs.py\", line 295, in capture_end",
+    "    super().capture_end()",
+    "RuntimeError: capture_end:build/CMakeFiles/torch_npu.dir/compiler_depend.ts:231 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 107025",
+    "[ERROR] 2026-11-21-13:29:56 (PID:224343, Device:0, RankID:-1) ERR00100 PTA call acl api failed.",
+    "[PID: 224343] 2026-11-21-13:29:56.601.237 Invalid_Argument(EE1017): Capture model validity check failed. Parameter capture model is invalid. Reason: In the cross-stream capture scenario, the last task (task_id=23) on the sub stream (stream_id=12) is not an event record task. Call aclrtRecordEvent on the sub stream to deliver an event record task.",
+    "TraceBack (most recent call last):",
+    "        rtStreamEndCapture execution failed, reason=capture model contains a stream that was not joined to the origin stream[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]",
+    ""
+  ]
+}

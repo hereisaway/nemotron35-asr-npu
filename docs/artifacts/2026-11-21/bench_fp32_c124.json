@@ -1,0 +1,138 @@
+{
+  "model_path": "/opt/atomgit/models/nemotron-3.5-asr-streaming-0.6b",
+  "dtype": "float32",
+  "audio": "tests/data/query_to_draw.wav",
+  "audio_seconds": 5.064,
+  "chunks": 15,
+  "chunk_spec": {
+    "sample_rate": 16000,
+    "first_samples": 4040,
+    "subsequent_samples": 5520,
+    "first_frames": 25,
+    "subsequent_frames": 32,
+    "hop_length": 160,
+    "n_fft": 512,
+    "streaming_latency_ms": 320
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "warm": {
+        "first_window_s": 0.0752,
+        "steady_median_s": 0.0758,
+        "steady_p95_s": 0.0811,
+        "wall_s": 1.234,
+        "realtime_factor": 4.105
+      },
+      "runs": [
+        {
+          "first_window_s": 14.3651,
+          "steady_median_s": 0.0746,
+          "steady_p95_s": 0.0767,
+          "steady_max_s": 0.0805,
+          "wall_s": 15.534,
+          "realtime_factor": 0.326,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0752,
+          "steady_median_s": 0.0766,
+          "steady_p95_s": 0.0811,
+          "steady_max_s": 0.0811,
+          "wall_s": 1.226,
+          "realtime_factor": 4.131,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0726,
+          "steady_median_s": 0.0758,
+          "steady_p95_s": 0.0815,
+          "steady_max_s": 0.0835,
+          "wall_s": 1.234,
+          "realtime_factor": 4.105,
+          "final_text": "What is happening in this video"
+        }
+      ]
+    },
+    {
+      "concurrency": 2,
+      "warm": {
+        "first_window_s": 0.0765,
+        "steady_median_s": 0.0711,
+        "steady_p95_s": 0.0775,
+        "wall_s": 1.281,
+        "realtime_factor": 7.906
+      },
+      "runs": [
+        {
+          "first_window_s": 0.5817,
+          "steady_median_s": 0.0721,
+          "steady_p95_s": 0.0787,
+          "steady_max_s": 0.08,
+          "wall_s": 1.81,
+          "realtime_factor": 5.596,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0765,
+          "steady_median_s": 0.0711,
+          "steady_p95_s": 0.0775,
+          "steady_max_s": 0.0783,
+          "wall_s": 1.281,
+          "realtime_factor": 7.906,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0762,
+          "steady_median_s": 0.0708,
+          "steady_p95_s": 0.0759,
+          "steady_max_s": 0.0761,
+          "wall_s": 1.266,
+          "realtime_factor": 8.001,
+          "final_text": "What is happening in this video"
+        }
+      ]
+    },
+    {
+      "concurrency": 4,
+      "warm": {
+        "first_window_s": 0.0687,
+        "steady_median_s": 0.0698,
+        "steady_p95_s": 0.0762,
+        "wall_s": 1.5,
+        "realtime_factor": 13.505
+      },
+      "runs": [
+        {
+          "first_window_s": 0.0821,
+          "steady_median_s": 0.0698,
+          "steady_p95_s": 0.0762,
+          "steady_max_s": 0.079,
+          "wall_s": 1.5,
+          "realtime_factor": 13.505,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0687,
+          "steady_median_s": 0.0721,
+          "steady_p95_s": 0.0773,
+          "steady_max_s": 0.0782,
+          "wall_s": 1.497,
+          "realtime_factor": 13.53,
+          "final_text": "What is happening in this video"
+        },
+        {
+          "first_window_s": 0.0685,
+          "steady_median_s": 0.0692,
+          "steady_p95_s": 0.0744,
+          "steady_max_s": 0.0746,
+          "wall_s": 1.501,
+          "realtime_factor": 13.498,
+          "final_text": "What is happening in this video"
+        }
+      ]
+    }
+  ],
+  "cold_compile_s": 14.3651,
+  "peak_host_rss_mb": 4643.0
+}

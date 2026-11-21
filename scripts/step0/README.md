@@ -13,6 +13,7 @@ snapshot of `nvidia/nemotron-3.5-asr-streaming-0.6b`.
 | `bench_streaming.py` | Window latency / throughput at c1..cN. Writes JSON. |
 | `npu_graph_probe.py` | Adds `npu` to `GRAPH_CAPTURE_DEVICE_TYPES` and tries encoder capture; records the failure. |
 | `npu_capture_ops.py` | Op-level capture bisect (linear, conv1d, LSTM, SDPA, one_hot, index_add). |
+| `npu_capture_encoder.py` | Module-level capture bisect (`encoder`, `subsampling`, `attn`, `block`, `ff1`, `conv`, projections). One target per process: a failed capture poisons the process. |
 | `multilingual_parity.py` | FLEURS en/de/ja/zh parity against a manifest TSV. |
 
 Typical sequence on a fresh pod:
@@ -36,3 +37,15 @@ python scripts/step0/realtime_lifecycle.py --port 8011 --json-out logs/lifecycle
 `realtime_lifecycle.py --audio-b` defaults to a 16 kHz mono PCM16 file; any clip
 that the vendor/HF path transcribes as empty works, because the blank session
 is there to prove state isolation, not accuracy (#4385).
+
+Notes:
+
+- `bench_streaming.py` measures the in-process runner, not the HTTP/WebSocket
+  path; it also has to release each decode state's encoder slot explicitly
+  (`state.release_encoder_state()`), otherwise the pool runs out.
+- `realtime_lifecycle.py --only cancel` is the cold-start check. Run it on a
+  freshly started server: closing the socket during the first-window compile
+  makes the next session hit a 30 s `session_open_timeout` (documented in
+  `docs/step0-report.md`).
+- Every `npu_capture_encoder.py` target needs a fresh process. A failed capture
+  leaves torch_npu in a state where the next capture asserts.

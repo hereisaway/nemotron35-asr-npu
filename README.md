@@ -13,6 +13,14 @@ Bring `nvidia/nemotron-3.5-asr-streaming-0.6b` to Ascend NPU in SGLang-Omni, cov
 This is an **NPU-only** workstream. GPU (CUDA) support already exists in main;
 XPU already has a recipe. Do not duplicate those paths.
 
+## Where things stand (2026-11-21)
+
+- **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) is ready for review at `ae62c57` (rebased onto `main@a9e5996`, 9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped.
+- **CI is blocked on maintainer approval.** Every PR workflow, including Lint, reports `action_required`; the PR comment asks for the runs to be approved.
+- **M1 has a decision and numbers.** Eager streaming is ~0.07 s per 320 ms window from c1 to c4 (aggregate RTF 4.1x/7.9x/13.5x). NPU encoder graph capture is not enabled: SDPA attention creates an internal sub-stream, and with eager attention the full encoder still hits a host↔device copy during capture. That is a separate change, not a blocker for M0.
+- **Open items** are listed under [Next actions](#next-actions): #4385 parity, 910B3 confirmation, lifecycle unit tests, and the cold-compile cancellation follow-up.
+- **Everything here is reproducible from a fresh pod** with `scripts/step0/restore_env.sh` plus the commands in [docs/step0-report.md](docs/step0-report.md).
+
 ## Step 0 status (2026-11-21)
 
 Eager NPU bring-up is complete on 1x Ascend 910B4 (A2, 32 GB HBM). It was first brought up under an 8 GiB host-memory cgroup, where server `/v1/realtime` could not finish first-window TBE compilation. On a follow-up pod with a 64 GiB host-memory cgroup, `/v1/realtime` now passes end to end in fp32 and bf16 (`final='What is happening in this video'`) and the offline and streaming eager paths still reproduce the Step 0 transcripts. Details and commands: [docs/step0-report.md](docs/step0-report.md). Reproduction scripts: `scripts/step0/`.
@@ -25,7 +33,7 @@ The same 64 GiB pod also finished the remaining issue work:
 
 Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
 
-Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `a9e5996` as `ae62c57`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. Draft PR: [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
+Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `a9e5996` as `ae62c57`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. PR (ready for review): [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
 
 The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
@@ -49,9 +57,12 @@ Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issue
   - Response: @ping1jing2 replied **"already done"** on 2026-11-19 17:40
   - #1597 checklist now contains: `- [ ] **Nemotron 3.5 ASR** (@hereisaway #4310 )`
   - Pinged: @ping1jing2 (assignee/owner), @wangyao-i (Qwen3-ASR NPU conventions)
-- Draft PR: https://github.com/sgl-project/sglang-omni/pull/4381
+- PR: https://github.com/sgl-project/sglang-omni/pull/4381
   - Title: `[NPU] Nemotron 3.5 ASR: eager execution and realtime session limits`
-  - Status: draft, open; one commit `44d1a80ba`, nine files.
+  - Status: **ready for review** (not draft) since 2026-11-21; one commit `ae62c57`, nine files, rebased onto `main@a9e5996`.
+  - Body: motivation, validation matrix (fp32/bf16), c1/c2/c4 eager numbers, capture result, limitations, checklist.
+  - Comment asking for CI approval/review: https://github.com/sgl-project/sglang-omni/pull/4381#issuecomment-7060270254
+  - CI: all workflows `action_required` until a maintainer approves them.
 - Step 0 status comment: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
 - HF/vendor inference bug: https://github.com/sgl-project/sglang-omni/issues/4385
   - Title: `[Bug][Nemotron 3.5 ASR] HF/vendor path emits blank transcripts while the GGUF reference transcribes correctly`
@@ -121,7 +132,7 @@ Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issue
 1. [done] Claim accepted; #1597 checklist updated with `Nemotron 3.5 ASR (@hereisaway #4310)`.
 2. [done] Pin and record the exact CANN / torch_npu / sglang-omni versions.
 3. [done] Run the NPU eager path and the in-process streaming path for float32 and bfloat16.
-4. [done] Push PR 1 changes and open draft PR #4381.
+4. [done] Push PR 1 changes and open PR #4381; it is now ready for review at `ae62c57`.
 5. [done] Start a pod with more host memory (64 GiB) and finish server `/v1/realtime`.
 6. [done] Record commands and reproduction scripts under `docs/step0-report.md` and `scripts/step0/`.
 7. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.

@@ -1,0 +1,77 @@
+{
+  "host": "127.0.0.1",
+  "port": 8011,
+  "audio_a": "tests/data/query_to_draw.wav",
+  "audio_b": "/tmp/lifecycle_b.wav",
+  "health_before": {
+    "status": "healthy",
+    "running": true,
+    "stages": [
+      "asr"
+    ],
+    "entry_stage": "asr",
+    "total_requests": 0,
+    "pending_completions": 0,
+    "request_states": {},
+    "stream_delivery": {
+      "stream_backlog_bytes": 0,
+      "open_stream_count": 0,
+      "generation_finished_stream_count": 0,
+      "longest_reader_idle_s": 0.0,
+      "failed_stream_count": 0
+    }
+  },
+  "scenarios": {
+    "cancel": {
+      "checks": {
+        "follow_up_non_empty": false,
+        "no_errors": false
+      },
+      "follow_up": {
+        "text": "",
+        "elapsed_s": 0.0,
+        "errors": []
+      },
+      "follow_up_error": "AssertionError: {'type': 'error', 'sglang': {'fatal': True}, 'error': {'type': 'server_error', 'code': 'session_open_timeout', 'message': 'session open timed out', 'event_id': 'configure', 'param': None}, 'event_id': 'evt_ac1266b6eed8454d9befe7d4e0245061'}",
+      "wall_s": 35.145,
+      "passed": false
+    }
+  },
+  "health_after_cancel": {
+    "status": "healthy",
+    "running": true,
+    "stages": [
+      "asr"
+    ],
+    "entry_stage": "asr",
+    "total_requests": 0,
+    "pending_completions": 0,
+    "request_states": {},
+    "stream_delivery": {
+      "stream_backlog_bytes": 0,
+      "open_stream_count": 0,
+      "generation_finished_stream_count": 0,
+      "longest_reader_idle_s": 0.0,
+      "failed_stream_count": 0
+    }
+  },
+  "health_after": {
+    "status": "healthy",
+    "running": true,
+    "stages": [
+      "asr"
+    ],
+    "entry_stage": "asr",
+    "total_requests": 0,
+    "pending_completions": 0,
+    "request_states": {},
+    "stream_delivery": {
+      "stream_backlog_bytes": 0,
+      "open_stream_count": 0,
+      "generation_finished_stream_count": 0,
+      "longest_reader_idle_s": 0.0,
+      "failed_stream_count": 0
+    }
+  },
+  "passed": false
+}

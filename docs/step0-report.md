@@ -1,7 +1,7 @@
 # Step 0 — NPU eager bring-up report
 
 Date: 2026-11-20 (initial pod), 2026-11-21 (follow-up pod)
-Code under test: `sgl-project/sglang-omni` `3b73fdf38` (base), fork branch `feat/nemotron35-asr-npu` `44d1a80ba` (PR 1 changes, draft PR #4381)
+Code under test: `sgl-project/sglang-omni` base `3b73fdf38`, fork branch `feat/nemotron35-asr-npu` (PR 1). Step 0 ran `44d1a80ba`; the current review commit is `ae62c57`, rebased onto `main@a9e5996`.
 Model: `nvidia/nemotron-3.5-asr-streaming-0.6b`
 
 ## Hardware and software
@@ -73,7 +73,7 @@ FLEURS en/de/ja/zh, 4 clips per locale, float32 and bfloat16, via `scripts/step0
 - float32 and bfloat16 agree on 15/16, and NPU and CPU fail on the same inputs, so this is not an NPU regression. The same behavior appears with native Transformers 5.13/5.19 and with the model card's `bcn_weather.mp3` example.
 - Conclusion: the HF/vendor Nemotron 3.5 inference path is broken relative to the reference runtime. Filed as #4385; it should not block NPU enablement.
 
-JSON artifacts are written under `logs/` and are git-ignored. Reference build: CMake 4.4.5 from pip, SentencePiece 0.2.1 static from the PyPI sdist into `.deps/sentencepiece`, llama.cpp submodule `bd4f514`, configured ASR-only and run with `--backend cpu`:
+JSON artifacts are written under `logs/` (git-ignored); the 2026-11-21 run is archived under [`docs/artifacts/2026-11-21/`](artifacts/2026-11-21/README.md). Reference build: CMake 4.4.5 from pip, SentencePiece 0.2.1 static from the PyPI sdist into `.deps/sentencepiece`, llama.cpp submodule `bd4f514`, configured ASR-only and run with `--backend cpu`:
 
 ```bash
 python -m pip install --target /tmp/cmake_pkg "cmake>=3.26"
@@ -124,13 +124,15 @@ Details on the cold-cancel failure:
 - This is a cold-start-only edge case (it needs an aborted compile in flight).
   Documenting it is enough for the eager PR; a follow-up can either honour the
   session's `operation_timeout_s` on the stage side or skip admission retries
-  while a compile is running.
+  while a compile is running. Raw output:
+  [`lifecycle_fp32.json`](artifacts/2026-11-21/lifecycle_fp32.json) and
+  [`lifecycle_cold_cancel_fp32.json`](artifacts/2026-11-21/lifecycle_cold_cancel_fp32.json).
 
 ## M1 eager performance (2026-11-21)
 
 Single process, fp32, `Nemotron3_5ASRModelRunner`, 5.06 s of audio (15 windows
 of 320 ms), 910B4 (A2, 32 GB HBM), `scripts/step0/bench_streaming.py`
-(`logs/bench_fp32_c124.json`):
+([`docs/artifacts/2026-11-21/bench_fp32_c124.json`](artifacts/2026-11-21/bench_fp32_c124.json)):
 
 | Concurrency | First window | Steady median | Steady p95 | Wall | Aggregate RTF |
 |---|---|---|---|---|---|
@@ -181,7 +183,10 @@ Decision for M1: keep the documented eager fallback for this PR. Enabling NPU
 capture is a separate change with a concrete path: capture with `eager`
 attention and remove the remaining host↔device copy (or make it
 stream-safe) inside the encoder before capture. The eager numbers below are
-the baseline.
+the baseline. Raw output:
+[`npu_graph_probe_fp32.json`](artifacts/2026-11-21/npu_graph_probe_fp32.json),
+[`npu_capture_ops.json`](artifacts/2026-11-21/npu_capture_ops.json),
+[`npu_capture_encoder.json`](artifacts/2026-11-21/npu_capture_encoder.json).
 
 ## Findings
 
@@ -214,7 +219,7 @@ If the next pod uses the official SGLang 0.5.23 NPU image (CANN 9.1.0, Python 3.
 
 ## Handoff state
 
-- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is rebased onto `main@a9e5996` locally as `ae62c57` (still to push). It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests. Draft PR #4381 is open; 58 passed / 5 skipped after the rebase.
+- `hereisaway/sglang-omni` branch `feat/nemotron35-asr-npu` is rebased onto `main@a9e5996`, pushed as `ae62c57`, and PR #4381 is marked ready for review. It contains the `has_device_streams` synchronization fix, the realtime session-limit fix, the NPU example config, cookbook/installation notes and unit tests; 58 passed / 5 skipped after the rebase. CI waits on maintainer workflow approval (`action_required`).
 - `hereisaway/nemotron35-asr-npu` `main` contains this report, the README status, `scripts/step0/` and the multilingual parity script.
 - Issue #4310 was updated on 2026-11-21 with the Step 0 results, the realtime pass and the parity blocker: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
 - The HF/vendor inference bug is filed as #4385: https://github.com/sgl-project/sglang-omni/issues/4385. The GGUF reference confirms the audio and checkpoint are fine; NPU matches CPU behavior, so this does not block the NPU PR.
@@ -302,9 +307,12 @@ python /path/to/nemotron35-asr-npu/scripts/step0/realtime_client.py --port 8011
 
 ## Next
 
-1. Land PR #4381 (the `has_device_streams` synchronization fix and the realtime session-limit fix).
-2. Track #4385 and re-run multilingual parity after a fix.
-3. Add the native realtime lifecycle checks requested in #4310.
-4. M1: evaluate NPU encoder graph capture, otherwise document the eager fallback.
-5. M1: measure streaming latency and throughput at c1 and higher concurrency; record the SKU.
-6. M2: add device-sensitive tests, Ascend CI coverage if a runner is available, and finalize PR results/limitations.
+1. [done] Land-ready PR #4381: rebased onto `main@a9e5996` as `ae62c57`, pushed, marked ready for review, 58 passed / 5 skipped.
+2. [done] Add the native realtime lifecycle checks requested in #4310; warm paths pass, cold-compile cancellation is documented as a transient limitation.
+3. [done] M1: document the eager fallback after the NPU capture probe, with the SDPA / host-copy blockers.
+4. [done] M1: measure streaming latency and throughput at c1/c2/c4; SKU 910B4.
+5. [waiting] PR review: CI sits in `action_required` until a maintainer approves the workflow runs (see the PR comment).
+6. [open] Track #4385 and re-run multilingual parity after the vendor path is fixed.
+7. [open] M2: add device-sensitive unit tests (the lifecycle checks currently live in `scripts/step0/`), Ascend CI coverage if a runner is available.
+8. [open] Cold-compile cancellation: decide between honoring the stage-side `operation_timeout_s` and skipping admission retries while a compile is running.
+9. [open] Confirm with @ping1jing2 whether 910B4 (A2) is sufficient or 910B3 is required.

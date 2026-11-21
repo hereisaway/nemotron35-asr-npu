@@ -1,0 +1,19 @@
+{
+  "targets": [
+    {"target": "subsampling", "captured": true},
+    {"target": "positions", "captured": true},
+    {"target": "projector", "captured": true},
+    {"target": "joint", "captured": true},
+    {"target": "ff1", "captured": true},
+    {"target": "conv", "captured": true},
+    {"target": "attn", "attn_impl": "default", "captured": false, "error": "AclmdlRICaptureEnd 107025 (stream not joined)"},
+    {"target": "attn", "attn_impl": "sdpa", "captured": false, "error": "AclmdlRICaptureEnd 107025 (stream not joined)"},
+    {"target": "attn", "attn_impl": "eager", "captured": true},
+    {"target": "block", "attn_impl": "default", "captured": false, "error": "AclmdlRICaptureEnd 107025 (stream not joined)"},
+    {"target": "encoder", "attn_impl": "default", "captured": false, "error": "AclmdlRICaptureEnd 107025 (stream not joined)"},
+    {"target": "encoder", "attn_impl": "eager", "captured": false, "error": "aclrtMemcpy 107030 (host<->device copy inside capture)"}
+  ],
+  "note": "A failed capture poisons the process; every target ran in a fresh process. The decoder LSTM is not part of the captured region.",
+  "device": "910B4",
+  "stack": "CANN 9.2.1, torch_npu 2.9.0"
+}
