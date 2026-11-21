@@ -1,0 +1,442 @@
+{
+  "model_path": "/opt/atomgit/models/nemotron-3.5-asr-streaming-0.6b",
+  "normalize": "peak",
+  "by_dtype": {
+    "float32": [
+      {
+        "lang": "en_us",
+        "audio": "12741024238657315067.wav",
+        "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+        "transcript": "Unfortunately, stunning traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty.",
+        "elapsed_s": 16.295,
+        "wer": 0.0588,
+        "ref_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "hyp_norm": "unfortunately stunning traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty"
+      },
+      {
+        "lang": "en_us",
+        "audio": "9055240296608129734.wav",
+        "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+        "transcript": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "elapsed_s": 0.422,
+        "wer": 0.0,
+        "ref_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "hyp_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty"
+      },
+      {
+        "lang": "en_us",
+        "audio": "621925716775998155.wav",
+        "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed.",
+        "transcript": "Twentieth century research has shown that there are two pools of genetic variation hidden and expressed.",
+        "elapsed_s": 0.347,
+        "wer": 0.0,
+        "ref_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+        "hyp_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed"
+      },
+      {
+        "lang": "en_us",
+        "audio": "10335587906469246566.wav",
+        "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed.",
+        "transcript": "Twentieth century research has shown that there are two pools of genetic variation hidden and expressed.",
+        "elapsed_s": 0.375,
+        "wer": 0.0,
+        "ref_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+        "hyp_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed"
+      },
+      {
+        "lang": "de_de",
+        "audio": "17113436913741548046.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Люзен Рудел agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähnel und ebenso tödlich gegenüber ihrer Beute sind.",
+        "elapsed_s": 0.915,
+        "wer": 0.1154,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "люзен рудел agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähnel und ebenso tödlich gegenüber ihrer beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "10555751885736126606.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Löwenmudel agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähneln und ebenso tödlich gegenüber Beute sind.",
+        "elapsed_s": 0.567,
+        "wer": 0.0769,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "löwenmudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "13734019592211926155.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Löwenrudel agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "elapsed_s": 0.679,
+        "wer": 0.0,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "4963712857525084701.wav",
+        "reference": "Ziegen wurden anscheinend bereits vor ungefähr 10.000 Jahren im Zāgros-Gebirge im Iran domestiziert.",
+        "transcript": "Ziegen wurden anscheinend bereits vor ungefähr zehntausend Jahren in Sargrosgebirge im Iran domestiziert.",
+        "elapsed_s": 0.463,
+        "wer": 0.3333,
+        "ref_norm": "ziegen wurden anscheinend bereits vor ungefähr 10 000 jahren im zāgros gebirge im iran domestiziert",
+        "hyp_norm": "ziegen wurden anscheinend bereits vor ungefähr zehntausend jahren in sargrosgebirge im iran domestiziert"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "17808260654685775088.wav",
+        "reference": "技術決定論のほとんどの解釈は、2つの一般論を共有しています。1つは技術の発展自体が文化的・政治的な影響を大きく超えた道をたどっていること、もう1つは技術が社会的に条件づけられたものではなく、むしろ内在する社会に「影響」を与えることです。",
+        "transcript": "傷決定路のほとんどの解釈は二つの一般論を共有しています。  一つは技術の発展自体が文化的成治的な影響を大きく超えた道をただっていること、もう一つは技術が社会的に条件づけられたものではなく、むしろ内在する社会に影響を与えることです。",
+        "elapsed_s": 0.874,
+        "wer": 0.1017,
+        "ref_norm": "技 術 決 定 論 の ほ と ん ど の 解 釈 は 、 2 つ の 一 般 論 を 共 有 し て い ま す 。 1 つ は 技 術 の 発 展 自 体 が 文 化 的 ・ 政 治 的 な 影 響 を 大 き く 超 え た 道 を た ど っ て い る こ と 、 も う 1 つ は 技 術 が 社 会 的 に 条 件 づ け ら れ た も の で は な く 、 む し ろ 内 在 す る 社 会 に 「 影 響 」 を 与 え る こ と で す 。",
+        "hyp_norm": "傷 決 定 路 の ほ と ん ど の 解 釈 は 二 つ の 一 般 論 を 共 有 し て い ま す 。 一 つ は 技 術 の 発 展 自 体 が 文 化 的 成 治 的 な 影 響 を 大 き く 超 え た 道 を た だ っ て い る こ と 、 も う 一 つ は 技 術 が 社 会 的 に 条 件 づ け ら れ た も の で は な く 、 む し ろ 内 在 す る 社 会 に 影 響 を 与 え る こ と で す 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "9364520089078562923.wav",
+        "reference": "地殻が薄いため、近い方には海が多くなることがあります。溶岩が浮上しやすくなっていました。",
+        "transcript": "近くは薄いため、近い法に海が多くなることがあります。  ヨーガンが浮上しやすくなっていました。",
+        "elapsed_s": 0.449,
+        "wer": 0.2045,
+        "ref_norm": "地 殻 が 薄 い た め 、 近 い 方 に は 海 が 多 く な る こ と が あ り ま す 。 溶 岩 が 浮 上 し や す く な っ て い ま し た 。",
+        "hyp_norm": "近 く は 薄 い た め 、 近 い 法 に 海 が 多 く な る こ と が あ り ま す 。 ヨ ー ガ ン が 浮 上 し や す く な っ て い ま し た 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "8740859839695260023.wav",
+        "reference": "都市はモロッコのスルタンによってダルル・バディアとして再建され、貿易拠点を設立したスペイン人貿易商によってカサブランカと名付けられました。",
+        "transcript": "年はモロッコのスルタンによってダルルバリアとして再建され、ボエディ拠点を設立したスペイン人防衛省によってカサブランカと名付けられました。",
+        "elapsed_s": 0.651,
+        "wer": 0.1739,
+        "ref_norm": "都 市 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル ・ バ デ ィ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 商 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。",
+        "hyp_norm": "年 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル バ リ ア と し て 再 建 さ れ 、 ボ エ デ ィ 拠 点 を 設 立 し た ス ペ イ ン 人 防 衛 省 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "1030930262884292674.wav",
+        "reference": "都市はモロッコのスルタンによってダルル・バディアとして再建され、貿易拠点を設立したスペイン人貿易商によってカサブランカと名付けられました。",
+        "transcript": "年はモロッコのスルタンによってダルルバリアとして再建され、貿易拠点を設立したスペイン人貿易賞によってカサブランカと名付けられました。",
+        "elapsed_s": 0.579,
+        "wer": 0.087,
+        "ref_norm": "都 市 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル ・ バ デ ィ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 商 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。",
+        "hyp_norm": "年 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル バ リ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 賞 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "10325559490685159122.wav",
+        "reference": "特朗普与土耳其总统雷杰普·塔伊普·埃尔多安（Recep Tayyip Erdoğan）通话后发表了声明。",
+        "transcript": "特朗普以土耳其总统雷解普塔伊普艾尔通话后发表了声明。",
+        "elapsed_s": 0.506,
+        "wer": 0.54,
+        "ref_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 · 塔 伊 普 · 埃 尔 多 安 （ r e c e p t a y y i p e r d o ğ a n ） 通 话 后 发 表 了 声 明 。",
+        "hyp_norm": "特 朗 普 以 土 耳 其 总 统 雷 解 普 塔 伊 普 艾 尔 通 话 后 发 表 了 声 明 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "149040922025982373.wav",
+        "reference": "特朗普与土耳其总统雷杰普·塔伊普·埃尔多安（Recep Tayyip Erdoğan）通话后发表了声明。",
+        "transcript": "特朗普与土耳其总统雷杰普塔伊普艾尔多安通话后发表了声明。",
+        "elapsed_s": 0.352,
+        "wer": 0.46,
+        "ref_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 · 塔 伊 普 · 埃 尔 多 安 （ r e c e p t a y y i p e r d o ğ a n ） 通 话 后 发 表 了 声 明 。",
+        "hyp_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 塔 伊 普 艾 尔 多 安 通 话 后 发 表 了 声 明 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "14716260585206763911.wav",
+        "reference": "邓迪大学（University of Dundee）的 Pamela Ferguson 教授指出：“记者如果公布嫌疑人的照片等信息的话，似乎确实存在危害性。”",
+        "transcript": "邓 迪 大 学 的 帕 梅 拉 Fergo 森 教 指 出, 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话, 似乎 确 实 存 在 危 害 性。",
+        "elapsed_s": 0.499,
+        "wer": 0.4595,
+        "ref_norm": "邓 迪 大 学 （ u n i v e r s i t y o f d u n d e e ） 的 p a m e l a f e r g u s o n 教 授 指 出 ： “ 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 ， 似 乎 确 实 存 在 危 害 性 。 ”",
+        "hyp_norm": "邓 迪 大 学 的 帕 梅 拉 f e r g o 森 教 指 出 , 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 , 似 乎 确 实 存 在 危 害 性 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "18085818397836204673.wav",
+        "reference": "邓迪大学（University of Dundee）的 Pamela Ferguson 教授指出：“记者如果公布嫌疑人的照片等信息的话，似乎确实存在危害性。”",
+        "transcript": "邓迪大学的 PM 了授记者如果公布嫌疑人的照片等信息的话, 似乎确实存在危害性。",
+        "elapsed_s": 0.542,
+        "wer": 0.527,
+        "ref_norm": "邓 迪 大 学 （ u n i v e r s i t y o f d u n d e e ） 的 p a m e l a f e r g u s o n 教 授 指 出 ： “ 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 ， 似 乎 确 实 存 在 危 害 性 。 ”",
+        "hyp_norm": "邓 迪 大 学 的 p m 了 授 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 , 似 乎 确 实 存 在 危 害 性 。"
+      }
+    ],
+    "bfloat16": [
+      {
+        "lang": "en_us",
+        "audio": "12741024238657315067.wav",
+        "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+        "transcript": "Unfortunately, stunning traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty.",
+        "elapsed_s": 30.313,
+        "wer": 0.0588,
+        "ref_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "hyp_norm": "unfortunately stunning traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty"
+      },
+      {
+        "lang": "en_us",
+        "audio": "9055240296608129734.wav",
+        "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+        "transcript": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "elapsed_s": 0.427,
+        "wer": 0.0,
+        "ref_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty",
+        "hyp_norm": "unfortunately studying traffic flow is difficult because driver behavior cannot be predicted with one hundred percent certainty"
+      },
+      {
+        "lang": "en_us",
+        "audio": "621925716775998155.wav",
+        "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed.",
+        "transcript": "Twentieth century research has shown that there are two pools of genetic variation hidden and expressed.",
+        "elapsed_s": 0.37,
+        "wer": 0.0,
+        "ref_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+        "hyp_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed"
+      },
+      {
+        "lang": "en_us",
+        "audio": "10335587906469246566.wav",
+        "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed.",
+        "transcript": "Twentieth century research has shown that there are two pools of genetic variation hidden and expressed.",
+        "elapsed_s": 0.352,
+        "wer": 0.0,
+        "ref_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+        "hyp_norm": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed"
+      },
+      {
+        "lang": "de_de",
+        "audio": "17113436913741548046.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Люзен Рудел agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähnel und ebenso tödlich gegenüber ihrer Beute sind.",
+        "elapsed_s": 0.869,
+        "wer": 0.1154,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "люзен рудел agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähnel und ebenso tödlich gegenüber ihrer beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "10555751885736126606.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Löwenmudel agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähneln und ebenso tödlich gegenüberer Beute sind.",
+        "elapsed_s": 0.544,
+        "wer": 0.1154,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "löwenmudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüberer beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "13734019592211926155.wav",
+        "reference": "Löwenrudel agieren ähnlich wie Wolfs- oder Hunderudel, Tiere, die den Löwen (aber nicht anderen Großkatzen) im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "transcript": "Löwenrudel agieren ähnlich wie Wolfs oder Hunderudel, Tiere, die den Löwen aber nicht anderen Großkatzen im Verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer Beute sind.",
+        "elapsed_s": 0.625,
+        "wer": 0.0,
+        "ref_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind",
+        "hyp_norm": "löwenrudel agieren ähnlich wie wolfs oder hunderudel tiere die den löwen aber nicht anderen großkatzen im verhalten überraschend ähneln und ebenso tödlich gegenüber ihrer beute sind"
+      },
+      {
+        "lang": "de_de",
+        "audio": "4963712857525084701.wav",
+        "reference": "Ziegen wurden anscheinend bereits vor ungefähr 10.000 Jahren im Zāgros-Gebirge im Iran domestiziert.",
+        "transcript": "Ziegen wurden anscheinend bereits vor ungefähr zehntausend Jahren in Sargrosgebirge im Iran domestiziert.",
+        "elapsed_s": 0.464,
+        "wer": 0.3333,
+        "ref_norm": "ziegen wurden anscheinend bereits vor ungefähr 10 000 jahren im zāgros gebirge im iran domestiziert",
+        "hyp_norm": "ziegen wurden anscheinend bereits vor ungefähr zehntausend jahren in sargrosgebirge im iran domestiziert"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "17808260654685775088.wav",
+        "reference": "技術決定論のほとんどの解釈は、2つの一般論を共有しています。1つは技術の発展自体が文化的・政治的な影響を大きく超えた道をたどっていること、もう1つは技術が社会的に条件づけられたものではなく、むしろ内在する社会に「影響」を与えることです。",
+        "transcript": "傷決定路のほとんどの解釈は二つの一般論を共有しています。  一つは技術の発展自体が文化的政治的な影響を大きく超えた道をただっていること、もう一つは技術が社会的に条件づけられたものではなく、むしろ内在する社会に影響を与えることです。",
+        "elapsed_s": 0.95,
+        "wer": 0.0932,
+        "ref_norm": "技 術 決 定 論 の ほ と ん ど の 解 釈 は 、 2 つ の 一 般 論 を 共 有 し て い ま す 。 1 つ は 技 術 の 発 展 自 体 が 文 化 的 ・ 政 治 的 な 影 響 を 大 き く 超 え た 道 を た ど っ て い る こ と 、 も う 1 つ は 技 術 が 社 会 的 に 条 件 づ け ら れ た も の で は な く 、 む し ろ 内 在 す る 社 会 に 「 影 響 」 を 与 え る こ と で す 。",
+        "hyp_norm": "傷 決 定 路 の ほ と ん ど の 解 釈 は 二 つ の 一 般 論 を 共 有 し て い ま す 。 一 つ は 技 術 の 発 展 自 体 が 文 化 的 政 治 的 な 影 響 を 大 き く 超 え た 道 を た だ っ て い る こ と 、 も う 一 つ は 技 術 が 社 会 的 に 条 件 づ け ら れ た も の で は な く 、 む し ろ 内 在 す る 社 会 に 影 響 を 与 え る こ と で す 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "9364520089078562923.wav",
+        "reference": "地殻が薄いため、近い方には海が多くなることがあります。溶岩が浮上しやすくなっていました。",
+        "transcript": "近くは薄いため、近い法に海が多くなることがあります。  ヨーガンが浮上しやすくなっていました。",
+        "elapsed_s": 0.443,
+        "wer": 0.2045,
+        "ref_norm": "地 殻 が 薄 い た め 、 近 い 方 に は 海 が 多 く な る こ と が あ り ま す 。 溶 岩 が 浮 上 し や す く な っ て い ま し た 。",
+        "hyp_norm": "近 く は 薄 い た め 、 近 い 法 に 海 が 多 く な る こ と が あ り ま す 。 ヨ ー ガ ン が 浮 上 し や す く な っ て い ま し た 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "8740859839695260023.wav",
+        "reference": "都市はモロッコのスルタンによってダルル・バディアとして再建され、貿易拠点を設立したスペイン人貿易商によってカサブランカと名付けられました。",
+        "transcript": "年はモロッコのスルタンによってダルルバリアとして再建され、ボエディ拠点を設立したスペイン人防衛省によってカサブランカと名付けられました。",
+        "elapsed_s": 0.635,
+        "wer": 0.1739,
+        "ref_norm": "都 市 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル ・ バ デ ィ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 商 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。",
+        "hyp_norm": "年 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル バ リ ア と し て 再 建 さ れ 、 ボ エ デ ィ 拠 点 を 設 立 し た ス ペ イ ン 人 防 衛 省 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。"
+      },
+      {
+        "lang": "ja_jp",
+        "audio": "1030930262884292674.wav",
+        "reference": "都市はモロッコのスルタンによってダルル・バディアとして再建され、貿易拠点を設立したスペイン人貿易商によってカサブランカと名付けられました。",
+        "transcript": "年はモロッコのスルタンによってダルルバリアとして再建され、貿易拠点を設立したスペイン人貿易賞によってカサブランカと名付けられました。",
+        "elapsed_s": 0.594,
+        "wer": 0.087,
+        "ref_norm": "都 市 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル ・ バ デ ィ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 商 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。",
+        "hyp_norm": "年 は モ ロ ッ コ の ス ル タ ン に よ っ て ダ ル ル バ リ ア と し て 再 建 さ れ 、 貿 易 拠 点 を 設 立 し た ス ペ イ ン 人 貿 易 賞 に よ っ て カ サ ブ ラ ン カ と 名 付 け ら れ ま し た 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "10325559490685159122.wav",
+        "reference": "特朗普与土耳其总统雷杰普·塔伊普·埃尔多安（Recep Tayyip Erdoğan）通话后发表了声明。",
+        "transcript": "特朗普以土耳其总统雷解普าาาาาาาาาา尔通话后发表了声明。",
+        "elapsed_s": 0.527,
+        "wer": 0.62,
+        "ref_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 · 塔 伊 普 · 埃 尔 多 安 （ r e c e p t a y y i p e r d o ğ a n ） 通 话 后 发 表 了 声 明 。",
+        "hyp_norm": "特 朗 普 以 土 耳 其 总 统 雷 解 普 า า า า า า า า า า 尔 通 话 后 发 表 了 声 明 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "149040922025982373.wav",
+        "reference": "特朗普与土耳其总统雷杰普·塔伊普·埃尔多安（Recep Tayyip Erdoğan）通话后发表了声明。",
+        "transcript": "特朗普与土耳其总统雷杰普塔伊普艾尔多安通话后发表了声明。",
+        "elapsed_s": 0.34,
+        "wer": 0.46,
+        "ref_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 · 塔 伊 普 · 埃 尔 多 安 （ r e c e p t a y y i p e r d o ğ a n ） 通 话 后 发 表 了 声 明 。",
+        "hyp_norm": "特 朗 普 与 土 耳 其 总 统 雷 杰 普 塔 伊 普 艾 尔 多 安 通 话 后 发 表 了 声 明 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "14716260585206763911.wav",
+        "reference": "邓迪大学（University of Dundee）的 Pamela Ferguson 教授指出：“记者如果公布嫌疑人的照片等信息的话，似乎确实存在危害性。”",
+        "transcript": "邓 迪 大 学 的 帕 梅 拉 个 森 教 指 出, 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话, 似乎 确 实 存 在 危 害 性。",
+        "elapsed_s": 0.48,
+        "wer": 0.527,
+        "ref_norm": "邓 迪 大 学 （ u n i v e r s i t y o f d u n d e e ） 的 p a m e l a f e r g u s o n 教 授 指 出 ： “ 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 ， 似 乎 确 实 存 在 危 害 性 。 ”",
+        "hyp_norm": "邓 迪 大 学 的 帕 梅 拉 个 森 教 指 出 , 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 , 似 乎 确 实 存 在 危 害 性 。"
+      },
+      {
+        "lang": "cmn_hans_cn",
+        "audio": "18085818397836204673.wav",
+        "reference": "邓迪大学（University of Dundee）的 Pamela Ferguson 教授指出：“记者如果公布嫌疑人的照片等信息的话，似乎确实存在危害性。”",
+        "transcript": "邓低大学的าา森教授指出, 记者如果公布嫌疑人的照片等信息的话, 似乎确实存在危害性。",
+        "elapsed_s": 0.54,
+        "wer": 0.527,
+        "ref_norm": "邓 迪 大 学 （ u n i v e r s i t y o f d u n d e e ） 的 p a m e l a f e r g u s o n 教 授 指 出 ： “ 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 ， 似 乎 确 实 存 在 危 害 性 。 ”",
+        "hyp_norm": "邓 低 大 学 的 า า 森 教 授 指 出 , 记 者 如 果 公 布 嫌 疑 人 的 照 片 等 信 息 的 话 , 似 乎 确 实 存 在 危 害 性 。"
+      }
+    ]
+  },
+  "pairwise_fp32_vs_bf16": [
+    {
+      "lang": "en_us",
+      "audio": "12741024238657315067.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "en_us",
+      "audio": "9055240296608129734.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "en_us",
+      "audio": "621925716775998155.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "en_us",
+      "audio": "10335587906469246566.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "de_de",
+      "audio": "17113436913741548046.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "de_de",
+      "audio": "10555751885736126606.wav",
+      "exact_match": false,
+      "wer_fp32_vs_bf16": 0.04
+    },
+    {
+      "lang": "de_de",
+      "audio": "13734019592211926155.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "de_de",
+      "audio": "4963712857525084701.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "ja_jp",
+      "audio": "17808260654685775088.wav",
+      "exact_match": false,
+      "wer_fp32_vs_bf16": 0.0088
+    },
+    {
+      "lang": "ja_jp",
+      "audio": "9364520089078562923.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "ja_jp",
+      "audio": "8740859839695260023.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "ja_jp",
+      "audio": "1030930262884292674.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "cmn_hans_cn",
+      "audio": "10325559490685159122.wav",
+      "exact_match": false,
+      "wer_fp32_vs_bf16": 0.3846
+    },
+    {
+      "lang": "cmn_hans_cn",
+      "audio": "149040922025982373.wav",
+      "exact_match": true,
+      "wer_fp32_vs_bf16": 0.0
+    },
+    {
+      "lang": "cmn_hans_cn",
+      "audio": "14716260585206763911.wav",
+      "exact_match": false,
+      "wer_fp32_vs_bf16": 0.1087
+    },
+    {
+      "lang": "cmn_hans_cn",
+      "audio": "18085818397836204673.wav",
+      "exact_match": false,
+      "wer_fp32_vs_bf16": 0.2162
+    }
+  ],
+  "mean_wer": {
+    "float32": {
+      "en_us": 0.0147,
+      "de_de": 0.1314,
+      "ja_jp": 0.1418,
+      "cmn_hans_cn": 0.4966
+    },
+    "bfloat16": {
+      "en_us": 0.0147,
+      "de_de": 0.141,
+      "ja_jp": 0.1396,
+      "cmn_hans_cn": 0.5335
+    }
+  }
+}

@@ -99,6 +99,31 @@ degenerate output (590 tokens / 1 blank on `query_to_cars`).
    (validated above; it also disables the NPU optimization for every model in
    the process).
 
+## Fix and corrected parity
+
+[PR #4445](https://github.com/sgl-project/sglang-omni/pull/4445) takes option 2
+for the vendored model: when `sdpa` is the configured implementation it calls
+`scaled_dot_product_attention` directly with the additive bias, and leaves the
+eager path unchanged. A regression test flips `_is_torch_npu_available` and
+asserts a non-zero attention output; it fails on the previous code.
+
+FLEURS parity after the fix (same 4 clips per locale, peak-normalized):
+
+| Locale | GGUF vs FLEURS | fixed fp32 NPU | fixed fp32 CPU |
+|---|---|---|---|
+| en_us | 0.121 | 0.015 | 0.015 |
+| de_de | 0.044 | 0.131 | 0.122 |
+| ja_jp | 0.163 | 0.142 | 0.142 |
+| cmn_hans_cn | 0.216 | 0.497 | 0.497 |
+| overall | 0.136 | 0.196 | 0.194 |
+
+All 16 clips now transcribe on both paths; fp32 and bf16 agree exactly on
+11/16. The `de` and `zh` references contain Latin parentheticals and alternate
+name transliterations that the character-level score counts as errors. The
+earlier "HF-NPU vs GGUF 0.92" measurements were the all-zero attention output.
+Raw output: `parity_fixed_npu.json` and `parity_fixed_cpu_fp32.json` under
+[`artifacts/2026-11-21/`](artifacts/2026-11-21/README.md).
+
 ## Separate bug found: blank/pad token ids disagree
 
 | Source | `<blank>` | `<pad>` |

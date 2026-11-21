@@ -18,7 +18,7 @@ XPU already has a recipe. Do not duplicate those paths.
 - **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) is ready for review at `ae62c57` (rebased onto `main@a9e5996`, 9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped.
 - **CI is blocked on maintainer approval.** Every PR workflow, including Lint, reports `action_required`; the PR comment asks for the runs to be approved.
 - **M1 has a decision and numbers.** Eager streaming is ~0.07 s per 320 ms window from c1 to c4 (aggregate RTF 4.1x/7.9x/13.5x). NPU encoder graph capture is not enabled: SDPA attention creates an internal sub-stream, and with eager attention the full encoder still hits a host↔device copy during capture. That is a separate change, not a blocker for M0.
-- **Open items** are listed under [Next actions](#next-actions): #4385 parity, 910B3 confirmation, lifecycle unit tests, and the cold-compile cancellation follow-up.
+- **Open items** are listed under [Next actions](#next-actions): #4381 and #4445 review, 910B3 confirmation, lifecycle unit tests, and the cold-compile cancellation follow-up.
 - **Everything here is reproducible from a fresh pod** with `scripts/step0/restore_env.sh` plus the commands in [docs/step0-report.md](docs/step0-report.md).
 
 ## Step 0 status (2026-11-21)
@@ -37,17 +37,25 @@ Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `a9e5996`
 
 The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
-## Multilingual parity status (2026-11-21)
+## Multilingual parity status (2026-11-21, corrected)
 
-FLEURS en/de/ja/zh (4 clips each) shows that the **HF/vendor inference path is broken relative to the model's reference runtime**, on CPU and NPU alike:
+The blank-transcript parity problem is fixed. Root cause: Transformers 5.19 `sdpa_attention_forward` converts any non-bool `attention_mask` to a boolean mask whenever `torch_npu` is importable, on any device. The model passes its relative-position bias matrix as that mask, so the conversion masks every position and self-attention returns zeros. The frontend, subsampling, positional encoding and layer-0 feed-forward match NeMo exactly. [PR #4445](https://github.com/sgl-project/sglang-omni/pull/4445) keeps the bias out of the conversion; details in [the investigation](docs/issue-4385-investigation-2026-11-21.md).
 
-- The HF/vendor path emits blank or unstable transcripts on most clips: 13/16 blank on NPU and 9/16 on CPU. Native Transformers 5.13/5.19 and the model card's own `bcn_weather.mp3` example behave the same way.
-- A NeMo-Speech.cpp `q8_0` GGUF reference (ASR-only build, CPU) transcribes all 16 clips, with mean WER 0.14 against the FLEURS references (en 0.12, de 0.04, ja 0.16, zh 0.22).
-- HF-NPU vs GGUF WER is 0.92 and HF-CPU vs GGUF is 0.89, with 0/16 exact matches. float32 and bfloat16 agree with each other on 15/16, so NPU matches CPU behavior; it is not an NPU regression.
+FLEURS en/de/ja/zh (4 clips each), peak-normalized, after the fix:
 
-Filed as upstream issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385); it should not block NPU enablement. The evaluation script is `scripts/step0/multilingual_parity.py`; JSON artifacts are written under `logs/` (git-ignored).
+| Locale | GGUF vs FLEURS | fixed fp32 NPU | fixed fp32 CPU | old HF-NPU vs GGUF |
+|---|---|---|---|---|
+| en_us | 0.121 | **0.015** | **0.015** | 0.939 |
+| de_de | 0.044 | 0.131 | 0.122 | 0.893 |
+| ja_jp | 0.163 | **0.142** | **0.142** | 0.851 |
+| cmn_hans_cn | 0.216 | 0.497 | 0.497 | 1.000 |
+| overall | 0.136 | 0.196 | 0.194 | 0.921 |
 
-Root cause (2026-11-21, [investigation](docs/issue-4385-investigation-2026-11-21.md)): Transformers 5.19 `sdpa_attention_forward` converts any non-bool `attention_mask` to a boolean mask on hosts where `torch_npu` is importable. The model passes its relative-position bias matrix as that mask, so the conversion masks every position and self-attention returns zeros. The frontend, subsampling, positional encoding and layer-0 feed-forward match NeMo exactly; disabling the conversion reproduces the NeMo transcripts on all three probe clips.
+- All 16 clips now transcribe on both paths (was 13/16 blank on NPU, 9/16 on CPU); fp32 and bf16 agree exactly on 11/16.
+- `ja_jp` and `cmn_hans_cn` are character-level. The `de` and `zh` references contain Latin parentheticals and alternate name transliterations, which the character-level score counts as many errors; the transcripts themselves are close.
+- The old 0.92 / 0.89 columns measured the all-zero attention output, not the model's accuracy.
+
+Filed as issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385), fixed by [#4445](https://github.com/sgl-project/sglang-omni/pull/4445). Evaluation script: `scripts/step0/multilingual_parity.py`; per-clip JSON in [`docs/artifacts/2026-11-21/`](docs/artifacts/2026-11-21/README.md).
 
 ## Issue and tracking
 
@@ -61,14 +69,17 @@ Root cause (2026-11-21, [investigation](docs/issue-4385-investigation-2026-11-21
   - Pinged: @ping1jing2 (assignee/owner), @wangyao-i (Qwen3-ASR NPU conventions)
 - PR: https://github.com/sgl-project/sglang-omni/pull/4381
   - Title: `[NPU] Nemotron 3.5 ASR: eager execution and realtime session limits`
-  - Status: **ready for review** (not draft) since 2026-11-21; one commit `ae62c57`, nine files, rebased onto `main@a9e5996`.
+  - Status: **ready for review** (not draft); rebased to `81c68c20` onto `main@e698f755`, nine files. `tests/unit_test/nemotron3_5_asr`: 58 passed / 5 skipped.
   - Body: motivation, validation matrix (fp32/bf16), c1/c2/c4 eager numbers, capture result, limitations, checklist.
   - Comment asking for CI approval/review: https://github.com/sgl-project/sglang-omni/pull/4381#issuecomment-7060270254
   - CI: all workflows `action_required` until a maintainer approves them.
+- Fix PR for the parity bug: https://github.com/sgl-project/sglang-omni/pull/4445
+  - Title: `[Fix][NPU] Nemotron 3.5 ASR: keep the relative-position bias out of the torch_npu SDPA mask conversion`
+  - Status: open, ready for review; three files (+64/−10), regression test fails on the previous code.
 - Step 0 status comment: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
 - HF/vendor inference bug: https://github.com/sgl-project/sglang-omni/issues/4385
   - Title: `[Bug][Nemotron 3.5 ASR] HF/vendor path emits blank transcripts while the GGUF reference transcribes correctly`
-  - Status: open; GGUF reference workaround documented, NPU PR unaffected.
+  - Status: open; root cause found in the Transformers torch_npu SDPA mask conversion, fix in PR [#4445](https://github.com/sgl-project/sglang-omni/pull/4445). Parity re-measured after the fix (overall 0.196 fp32 vs the GGUF 0.136).
 - Related:
   - Roadmap focus: https://github.com/sgl-project/sglang-omni/issues/1081
   - Precedent for NPU model tracking: https://github.com/sgl-project/sglang-omni/issues/2076
@@ -127,7 +138,7 @@ Root cause (2026-11-21, [investigation](docs/issue-4385-investigation-2026-11-21
 - NPU graph capture support (ATB/FIA) and its interaction with streaming buckets.
 - The test pod is 910B4 (A2, 32 GB), not the 910B3 target and not the A3 reference used in #2076; maintainers may ask for A3 results.
 - NPU toolchain maturity (operator libs / drivers / build), noted in #1597 comments.
-- The HF/vendor Nemotron 3.5 inference path is broken relative to the GGUF reference: 13/16 FLEURS clips blank on NPU, 9/16 on CPU, 0/16 exact matches, while the NeMo-Speech.cpp `q8_0` GGUF transcribes all 16. This is not NPU-specific; filed as #4385.
+- The HF/vendor Nemotron 3.5 inference path used to blank most FLEURS clips (13/16 NPU, 9/16 CPU). That was the Transformers torch_npu SDPA mask conversion, not the model; PR [#4445](https://github.com/sgl-project/sglang-omni/pull/4445) fixes it and parity is back to 0.196 overall fp32. The remaining `de`/`zh` gap is accuracy on a 4-clip sample, not a runtime bug.
 
 ## Next actions
 
@@ -143,5 +154,5 @@ Root cause (2026-11-21, [investigation](docs/issue-4385-investigation-2026-11-21
 10. [open] Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
 11. [done] M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; NPU capture fails in `AclmdlRICaptureEnd`, so the eager fallback is documented and capture is a separate change.
 12. [done] M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly (910B4).
-13. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations. Branch rebased onto `main@a9e5996` (`ae62c57`), 58 passed / 5 skipped; no NPU CI runner.
-14. [blocked] After #4385 is fixed: re-run en/de/ja/zh parity and close M0.
+13. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations. Branch rebased onto `main@e698f755` (`81c68c20`), 58 passed / 5 skipped; no NPU CI runner.
+14. [done] Re-run en/de/ja/zh parity after the #4385 fix: 16/16 transcripts on both paths, overall 0.196 fp32 (GGUF 0.136). Close M0 once PR #4445 lands.
