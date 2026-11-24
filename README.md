@@ -1,6 +1,6 @@
 # Nemotron 3.5 ASR on Ascend NPU — workspace
 
-Last updated: 2026-11-21
+Last updated: 2026-11-24
 
 ## Task
 
@@ -13,13 +13,27 @@ Bring `nvidia/nemotron-3.5-asr-streaming-0.6b` to Ascend NPU in SGLang-Omni, cov
 This is an **NPU-only** workstream. GPU (CUDA) support already exists in main;
 XPU already has a recipe. Do not duplicate those paths.
 
-## Where things stand (2026-11-21)
+## Where things stand (2026-11-24)
 
-- **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) is ready for review at `81c68c20` (rebased onto `main@e698f755`, 9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped.
-- **CI is blocked on maintainer approval.** Every PR workflow, including Lint, reports `action_required`; the PR comment asks for the runs to be approved.
+- **Both PRs are through review round 1.** Maintainers reviewed on 2026-11-23
+  (`cocoa-liu` two notes on #4381, `ping1jing2` one on each PR), and all four are
+  addressed. #4381 is at `5234a42d`, #4445 at `d94f0a9e`. What changed and
+  why: [docs/review-2026-11-24.md](docs/review-2026-11-24.md).
+- **#4445 was approved and then dismissed by its own fix push.** `ping1jing2`
+  approved at 2026-11-23 20:07; the docs/format commit that answered the review
+  reset the approval to `DISMISSED` per the repo's stale-approval setting, so it
+  needs one more approve click. #4381 still has no approval.
+- **CI ran once, and the only red was formatting.** Every workflow was approved on
+  2026-11-23 and finished; `lint` failed on both PRs for `isort` (#4381) and
+  `black-jupyter` (#4445), no code failure. Both are fixed. The new heads are
+  queued as `action_required` again — the first-contributor gate is per run, so
+  each push needs a maintainer approval.
+- **M0 is complete and in review.** PR [#4381](https://github.com/sgl-project/sglang-omni/pull/4381) covers eager execution and the realtime session limits (9 files, +166/−7). fp32 and bf16 are validated for offline, in-process streaming and server `/v1/realtime` on 1× 910B4; `tests/unit_test/nemotron3_5_asr` is 58 passed / 5 skipped, re-run on 910B4 after the review fixes.
 - **The parity bug is root-caused and fixed in review.** #4385 was the Transformers `sdpa_attention_forward` conversion of the model's relative-position bias into an all-masked boolean mask whenever `torch_npu` is importable. [PR #4445](https://github.com/sgl-project/sglang-omni/pull/4445) keeps the bias out of that conversion; all 16 FLEURS clips transcribe again and the corrected fp32 parity is 0.196 overall against the GGUF 0.136.
 - **M1 has a decision and numbers.** Eager streaming is ~0.07 s per 320 ms window from c1 to c4 (aggregate RTF 4.1x/7.9x/13.5x). NPU encoder graph capture is not enabled: SDPA attention creates an internal sub-stream, and with eager attention the full encoder still hits a host↔device copy during capture. That is a separate change, not a blocker for M0.
-- **Open items** are listed under [Next actions](#next-actions): #4381 and #4445 review, 910B3 confirmation, lifecycle unit tests, and the cold-compile cancellation follow-up.
+- **Open items** are listed under [Next actions](#next-actions): the `action_required`
+  approvals, the #4445 re-approve, 910B3 confirmation, and graph capture as a
+  separate change.
 - **Everything here is reproducible from a fresh pod** with `scripts/step0/restore_env.sh` plus the commands in [docs/step0-report.md](docs/step0-report.md).
 
 ## Step 0 status (2026-11-21)
@@ -34,7 +48,7 @@ The same 64 GiB pod also finished the remaining issue work:
 
 Pinned stack: CANN 9.2.1, Python 3.11.18, torch 2.9.0+cpu, torch_npu 2.9.0, sglang 0.5.23 (source install with `pyproject_npu.toml`), sglang-omni `3b73fdf38` on fork branch `feat/nemotron35-asr-npu`, transformers 5.19.0, triton-ascend 3.2.0.
 
-Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `e698f755` as `81c68c20`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. PR (ready for review): [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase).
+Two code changes are on `feat/nemotron35-asr-npu`, rebased onto `main` `e698f755` as `81c68c20`: NPU streaming must synchronize through `has_device_streams`, and the realtime adapter must use the shared audio-session `SessionLimits` (300 s operation timeout, 64 pending chunks) instead of the 30 s defaults. The NPU example config, docs and unit tests are in the same commit. PR (ready for review): [#4381](https://github.com/sgl-project/sglang-omni/pull/4381). `tests/unit_test/nemotron3_5_asr`: 58 passed, 5 skipped (re-run after the rebase). The branch head is now `5234a42d`, which adds the [review round 1](docs/review-2026-11-24.md) fixes on top.
 
 The official SGLang 0.5.23 NPU manifest targets CANN 9.1.0, Python 3.12 and torch/torch_npu 2.10; this pod's combination is a bring-up stack, not the upstream-validated one. Keep `TBE_PARALLEL_COMPILER=0`, `TBE_OP_PARALLEL_COMPILER=0` and `MAX_COMPILE_CORE_NUMBER=1` unless the kernel cache is prewarmed.
 
@@ -70,13 +84,29 @@ Filed as issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385), 
   - Pinged: @ping1jing2 (assignee/owner), @wangyao-i (Qwen3-ASR NPU conventions)
 - PR: https://github.com/sgl-project/sglang-omni/pull/4381
   - Title: `[NPU] Nemotron 3.5 ASR: eager execution and realtime session limits`
-  - Status: **ready for review** (not draft); rebased to `81c68c20` onto `main@e698f755`, nine files. `tests/unit_test/nemotron3_5_asr`: 58 passed / 5 skipped.
+  - Status: **open, mergeable, `blocked`** on the per-run workflow approval and on
+    review. Head `5234a42d` (two commits: the feature, then the review fixes),
+    nine files. `tests/unit_test/nemotron3_5_asr`: 58 passed / 5 skipped on 910B4.
   - Body: motivation, validation matrix (fp32/bf16), c1/c2/c4 eager numbers, capture result, limitations, checklist.
+  - Review round 1 (2026-11-23): `cocoa-liu` asked for the cookbook command to be
+    broken with line breaks and for an NPU guard on the stream-sync test;
+    `ping1jing2` asked to drop the model example from the installation guide.
+    Addressed in `5234a42d`; consolidated reply:
+    https://github.com/sgl-project/sglang-omni/pull/4381#issuecomment-7126184231
   - Comment asking for CI approval/review: https://github.com/sgl-project/sglang-omni/pull/4381#issuecomment-7060270254
-  - CI: all workflows `action_required` until a maintainer approves them.
+  - CI: ran once on 2026-11-23 (`lint` red on `isort`, now fixed); the head
+    `5234a42d` runs are `action_required` until a maintainer approves them.
 - Fix PR for the parity bug: https://github.com/sgl-project/sglang-omni/pull/4445
   - Title: `[Fix][NPU] Nemotron 3.5 ASR: keep the relative-position bias out of the torch_npu SDPA mask conversion`
-  - Status: open, ready for review; three files (+64/−10), regression test fails on the previous code.
+  - Status: **open, mergeable, `blocked`**; approved by `ping1jing2` on 2026-11-23
+    20:07 at `a61f96d0`, then `DISMISSED` when the review-fix commit `d94f0a9e`
+    was pushed. Three files (+64/−10); the regression test fails on the previous
+    code and passes on 910B4.
+  - Review round 1: `ping1jing2` asked for the `UPSTREAM.md` note to be rewritten
+    as plain sentence-per-line prose. Addressed in `d94f0a9e`; consolidated reply:
+    https://github.com/sgl-project/sglang-omni/pull/4445#issuecomment-7126183773
+  - CI: ran once on 2026-11-23 (`lint` red on `black-jupyter`, now fixed); the
+    head `d94f0a9e` runs are `action_required` until a maintainer approves them.
 - Step 0 status comment: https://github.com/sgl-project/sglang-omni/issues/4310#issuecomment-7038594567
 - HF/vendor inference bug: https://github.com/sgl-project/sglang-omni/issues/4385
   - Title: `[Bug][Nemotron 3.5 ASR] HF/vendor path emits blank transcripts while the GGUF reference transcribes correctly`
@@ -152,8 +182,16 @@ Filed as issue [#4385](https://github.com/sgl-project/sglang-omni/issues/4385), 
 7. [done] Build a NeMo-Speech.cpp GGUF reference; it confirms the HF/vendor path is the parity blocker, not NPU.
 8. [done] File the HF/vendor Nemotron 3.5 inference bug upstream: #4385.
 9. [done] Add the native realtime lifecycle checks requested in #4310: interleaved sessions, disconnect/reconnect, cancellation during encoding, and slot reuse with different audio. Warm paths pass; cold-compile cancellation leaves a transient `session_open_timeout` documented in the report.
-10. [open] Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed.
+10. [open] Ask @ping1jing2 to confirm whether 910B4 (A2) results are enough or 910B3 validation is needed. Still unanswered after review round 1; raise it with the approval ping.
 11. [done] M1: evaluate `NemotronStreamingEncoderGraphRunner` + `NpuDeviceGraphBackend`; NPU capture fails in `AclmdlRICaptureEnd`, so the eager fallback is documented and capture is a separate change.
 12. [done] M1: measure streaming window latency and throughput at c1 and higher concurrency; record the SKU explicitly (910B4).
-13. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations. Branch rebased onto `main@e698f755` (`81c68c20`), 58 passed / 5 skipped; no NPU CI runner.
+13. [in progress] M2: add/extend device-sensitive tests, Ascend CI coverage if a runner is available, and land PR #4381 with results and limitations. Review round 1 addressed at `5234a42d`; 58 passed / 5 skipped on 910B4; no NPU CI runner.
 14. [done] Re-run en/de/ja/zh parity after the #4385 fix: 16/16 transcripts on both paths, overall 0.196 fp32 (GGUF 0.136). Close M0 once PR #4445 lands.
+15. [done] Review round 1 (2026-11-23): answer all four review comments and fix the
+    `isort` / `black-jupyter` lint failures. Verification and the reasoning behind
+    each change: [docs/review-2026-11-24.md](docs/review-2026-11-24.md).
+16. [open] Get the workflow runs approved on `5234a42d` / `d94f0a9e`, and get #4445
+    re-approved after the stale-approval dismissal. Everything else is green
+    locally; this is the only blocker.
+17. [open] After #4445 lands: close #4385 with the parity comment, and post the merge
+    status on #4310.
